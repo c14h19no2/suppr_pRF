@@ -1,0 +1,50 @@
+# conda env create -n exptools2 -f exptools2-env.yml
+# pip install git+https://github.com/VU-Cog-Sci/exptools2/
+# pip install --index-url=https://pypi.sr-research.com sr-research-pylink
+name: exptools2
+channels:
+- defaults
+- conda-forge
+dependencies:
+- python=3.9
+- pip
+- numpy 
+- scipy 
+- matplotlib 
+- pandas 
+- pyopengl 
+- pillow 
+- lxml 
+- openpyxl 
+- xlrd 
+- configobj 
+- pyyaml 
+- gevent 
+- greenlet 
+- msgpack-python 
+- psutil 
+- pytables 
+- 'requests[security]' 
+- cffi 
+- seaborn 
+- wxpython 
+- cython 
+- pyzmq 
+- pyserial 
+- qt 
+- pyqt
+- pyglet 
+- pysoundfile 
+- python-bidi 
+- moviepy 
+- pyosf
+
+- pip:
+  - zmq 
+  - json-tricks 
+  - pyparallel 
+  - sounddevice 
+  - pygame 
+  - pysoundcard 
+  - psychopy_ext 
+  - psychopy
