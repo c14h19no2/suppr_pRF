@@ -1,0 +1,96 @@
+monitor:
+  # Spinoza 7T
+  #     width: 70.9
+  #     distance: 196
+  #     gamma: 2.1 # grey: 2.060, red: 2.114, green: 2.189, blue: 2.329
+  # psychophysics lab
+  #     width: 70.9
+  #     distance: 198
+  #     gamma: grey: 2.231, red: 2.324, green: 2.295, blue: 2.312
+  # BB lab
+  #     width: 52.6
+  #     distance: 75
+  name: BBLab
+  width: 52.6  # width of monitor (in cm)
+  distance: 75  # distance of participant from monitor (in cm)
+  gamma: 1  # specific value for gamma correction
+  verbose: True # set this parameter to False when you're running your experiment for real
+
+window:
+  size: [1920, 1080]
+  units: pix
+  fullscr: True
+
+eyetracker:
+  address: '100.1.1.1'
+  dot_size: 0.1  # in deg
+  options:
+    calibration_type: HV9
+
+stimuli:
+  instruction_text: 'Please keep looking at the center of screen \n during the experiment, it is important!'
+  pretrigger_text: 'Press "t" to start the experiment'
+  inner_fix_linewidth: 4
+  outer_fix_linewidth: 1
+  fixation_size_pixels: 1080
+  cue_size_pixels: 15 # cue dot
+  cue_size_deg: 1
+  stim_size_deg: 2 # degree
+  stim_circle_linewidth: 3 # pix
+  refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
+  stim_h5file: 'stims_256.h5'
+  sim_seq_h5file: 'seq_1000.h5'
+  stim_url: 'https://figshare.com/ndownloader/files/36732246'
+  fixdot_refresh_time: 0.2 # 0.4
+  seq_overlap_time: 0.015 # 0.015 should be fine
+  stim_refresh_time: 0.2 # 0.4
+  ITI_time: # With loc=1 and scale=1 the average ITI will be around 2s
+    loc: 1 # 2s for fMRI
+    scale: 1 # 1s for fMRI
+  nr_images_per_category: 45 # max 65
+  distance_from_center: 2 # degree
+
+design:
+  nr_renew_blocks: 3
+  start_duration: 1.0
+  nr_per_full_sequence: 48          # trials = x * num_seq (3) * runs (2)
+  nr_per_partial_sequence: 60       # trials = x * num_seq (3) * runs (1)
+  ratio_partial_sequences: 0.2      # full sequence ratio
+  nr_per_violate_sequence: 48       # 
+  ratio_violate_sequences: 0.2      # full sequence ratio
+  nr_per_combination_localizer: 4   # trials = x * 4 * 2
+  rate_ATtrial: 0.4
+  nr_stru_seqs: 1
+  nr_exem_seqs: 1
+  nr_rand_seqs: 1
+  category_key:
+    - 'face'
+    - 'scene'
+  category:
+    face:
+      - 'male'
+      - 'female'
+    scene:
+      - 'indoor'
+      - 'outdoor'
+  stim_location: # left:-1, right:1, bottom:-1, up:1
+    'top-left':     [-1,  1]
+    'top-right':    [ 1,  1]
+    'bottom-right': [ 1, -1]
+    'bottom-left':  [-1, -1]
+  location_name: ['top-left', 'top-right', 'bottom-right', 'bottom-left']
+  sequence_clockwise: [0, 1, 2, 3]
+  sequence_category_perm:
+    - [0, 1, 0, 1]
+    - [1, 0, 1, 0]
+    - [1, 1, 0, 0]
+    - [0, 0, 1, 1]
+    - [1, 0, 0, 1]
+    - [0, 1, 1, 0]
+various:
+  text_width: 1600
+  text_height: 40
+  text_position_x: 0
+  text_position_y: 100
+  # buttons: [['d','f'],['j','k']]
+  buttons: [['space']]
