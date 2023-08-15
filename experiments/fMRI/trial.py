@@ -16,7 +16,7 @@ class SequenceTrial(Trial):
     
     def __init__(self, session, trial_nr, phase_durations, phase_names,
                  parameters, timing, verbose=True, draw_each_frame=False):
-        """ Initializes a BarPassTrial object. 
+        """ Initializes a SequenceTrial object. 
         
         Parameters
         ----------
@@ -44,7 +44,7 @@ class SequenceTrial(Trial):
         self.idx = None
         if 'space' in self.parameters['correct_kb']:
             self.ind_res = self.parameters['correct_kb'].index('space')
-            self.session.res_feedback[self.trial_nr] = -1
+            self.session.resp_task[self.trial_nr] = -1
         else:
             self.ind_res = None
 
@@ -124,7 +124,7 @@ class SequenceTrial(Trial):
                     if self.count==1:
                         if key in self.parameters['correct_kb'] and self.parameters[
                             'correct_kb'].index(key)+1>=int((self.phase-2)/2):
-                            self.session.res_feedback[self.trial_nr] = 1
+                            self.session.resp_task[self.trial_nr] = 1
                             print('Correct response')
                         else:
                             # self.session.beep.play()
@@ -151,37 +151,345 @@ class SequenceTrial(Trial):
         
         super().run()
 
-
-class LocalizerTrial(Trial):
+class TestTrial(Trial):
     """
+    
     """
     def __init__(self, session, trial_nr, phase_durations, phase_names,
-                 parameters, timing, verbose=True, draw_each_frame=False):
-         
-         super().__init__(session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+        self.freq = round((1/15)*1/self.session.win.monitorFramePeriod) # 15 Hz of flickering for fixation dot
 
     def draw(self):
-        self.session.fixation_w.draw()
-        self.session.fixation_dot.draw()
-        self.session.filled_circles.draw()
         if self.phase == 0:
-            if self.parameters['category'] == 'object':
-                self.session.fixation_cue[self.parameters['subcategory']].draw()
-            elif self.parameters['category'] == 'face' or self.parameters['category'] == 'scene':
-                self.session.image_stims['colored'][self.session.seq_subcate[self.parameters['trial_ind']]][self.session.seq_loc[self.parameters['trial_ind']]
-                                ][self.session.seq_cate_ind[self.parameters['trial_ind']]].draw()
-        if self.phase == 1:
-            pass
-        self.session.empty_circles.draw()
-        self.session.win.flip()
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.circle.opacity = 1
+            start_time = getTime()
+            current_frame = 0
+            while getTime() - start_time <= self.phase_durations[0]:
+                self.session.fixation_w.draw()
+                if current_frame % (2*self.freq) < self.freq:
+                    # print(current_frame)
+                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
+                    self.session.fixation_dot.circle.opacity = current_frame%2
+                    self.session.fixation_dot.draw()
+                self.session.win.flip()
+                current_frame += 1
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.gabors[(45, 0)].draw()
+            self.session.gabors[(135, 45)].draw()
+            self.session.gabors[(225, 0)].draw()
+            self.session.gabors[(315, 45)].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+
+        if self.keys is None:
+            if events:
+                self.stop_phase()
+        else:
+            for key, t in events:
+                if key in self.keys:
+                    self.stop_phase()
 
     def run(self):
-        #####################################################
-        ## TRIGGER HERE
-        #####################################################
-        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_bar'))
+        super().run()
+
+class TaskTrial(Trial):
+    """
+    
+    """
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, corr_key, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.corr_key = corr_key
+        self.keys = keys
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+                          self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            start_time = getTime()
+            current_frame = 0
+            while getTime() - start_time <= self.phase_durations[0]:
+                self.session.fixation_w.draw()
+                if current_frame % (2*self.freq) < self.freq:
+                    # print(current_frame)
+                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
+                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
+                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
+                    self.session.fixation_dot.draw()
+                self.session.win.flip()
+                current_frame += 1
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.gabors[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
+            self.session.gabors[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+
+        if self.phase == 2 or self.phase == 1:
+            if self.keys is None:
+                if events:
+                    pass
+            else:
+                for key, t in events:
+                    if key in self.keys:
+                        pass
+
+    def run(self):
+        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_task'))
+        super().run()
+
+class TaskTrial_train(TaskTrial):
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, corr_key, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, keys, corr_key, timing, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.key = None
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            start_time = getTime()
+            current_frame = 0
+            while getTime() - start_time <= self.phase_durations[0]:
+                self.session.fixation_w.draw()
+                if current_frame % (2*self.freq) < self.freq:
+                    # print(current_frame)
+                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
+                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
+                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
+                    self.session.fixation_dot.draw()
+                self.session.win.flip()
+                current_frame += 1
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.gabors[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
+            self.session.gabors[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+        elif self.phase == 3:
+            if self.key == self.corr_key:
+                self.session.fixation_dot.inner_circle.color = 'chartreuse'
+            else:
+                self.session.fixation_dot.inner_circle.color = 'red'
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+            self.session.fixation_dot.inner_circle.fillColor = -1
+            self.session.fixation_dot.inner_circle.lineColor = -1
+
+    def get_events(self):
+        events = super(TaskTrial, self).get_events()
+        if self.phase == 2 or self.phase == 1:
+            if self.keys is None:
+                if events:
+                    self.stop_phase()
+            else:
+                for key, t in events:
+                    if key in self.keys:
+                        self.key = key
+                        self.stop_phase()
+
+class PingTrial(Trial):
+    """
+    
+    """
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+                          self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
+
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            start_time = getTime()
+            current_frame = 0
+            while getTime() - start_time <= self.phase_durations[0]:
+                self.session.fixation_w.draw()
+                if current_frame % (2*self.freq) < self.freq:
+                    # print(current_frame)
+                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
+                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
+                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
+                    self.session.fixation_dot.draw()
+                self.session.win.flip()
+                current_frame += 1
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.checkerboards[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
+            self.session.checkerboards[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+        if self.phase == 2 or self.phase == 1:
+            if self.session.stage == 'train':
+                if self.keys is None:
+                    if events:
+                        pass
+                        # self.stop_phase()
+                else:
+                    for key, t in events:
+                        if key in self.keys:
+                            self.session.resp_ping = np.append(self.session.resp_ping, 0)
+                            # self.stop_phase()
+            elif self.session.stage == 'test':
+                if self.keys is None:
+                    if events:
+                        pass
+                else:
+                    for key, t in events:
+                        if key in self.keys:
+                            pass
+
+    def run(self):
+        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_ping'))
+        super().run()
+
+class RestingTrial(Trial):
+    """
+    
+    """
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    # def get_events(self):
+    #     events = super().get_events()
+    #     if self.keys is None:
+    #         pass
+    #     else:
+    #         pass
+
+    def run(self):
+        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_resting'))
+        super().run()
+
+class SuckerTrial(Trial):
+    """
+    
+    """
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+                          self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
+        
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            start_time = getTime()
+            current_frame = 0
+            while getTime() - start_time <= self.phase_durations[0]:
+                self.session.fixation_w.draw()
+                if current_frame % (2*self.freq) < self.freq:
+                    # print(current_frame)
+                    # self.session.fixation_dot.inner_circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
+                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
+                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
+                    self.session.fixation_dot.draw()
+                self.session.win.flip()
+                current_frame += 1
+        elif self.phase == 1:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixation_w.draw()
+            self.session.fixation_dot.inner_circle.opacity = 1
+            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+
+        if self.keys is None:
+            pass
+        else:
+            pass
+
+    def run(self):
+        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_sucker'))
         super().run()
 
 class InstructionTrial(Trial):
@@ -209,42 +517,12 @@ class InstructionTrial(Trial):
                              anchorHoriz = 'center',
                              anchorVert = 'center')
         self.text.setSize(txt_height)
-
         self.keys = keys
-        if hasattr(self.session, 'AT_image'):
-            img0 = self.session.images_all[self.session.AT_image['category'][0]][self.session.AT_image['img_ind_in_pool'][0]]
-            img1 = self.session.images_all[self.session.AT_image['category'][1]][self.session.AT_image['img_ind_in_pool'][1]]
-            self.AT_image0 = ImageStim(win=self.session.win,
-                                    image=img0,
-                                    mask='circle',
-                                    pos=[-1.4, -1.3],
-                                    units='deg',
-                                    name='AT_image',
-                                    texRes=img0.shape[1],
-                                    colorSpace='rgb',
-                                    size=self.session.settings['stimuli'].get(
-                                        'stim_size_deg'),
-                                    interpolate=True)
-            self.AT_image1 = ImageStim(win=self.session.win,
-                                    image=img1,
-                                    mask='circle',
-                                    pos=[1.4, -1.3],
-                                    units='deg',
-                                    name='AT_image',
-                                    texRes=img1.shape[1],
-                                    colorSpace='rgb',
-                                    size=self.session.settings['stimuli'].get(
-                                        'stim_size_deg'),
-                                    interpolate=True)
+        
 
     def draw(self):
         self.session.fixation_w.draw()
-        # self.session.report_fixation.draw()
-
         self.text.draw()
-        if hasattr(self.session, 'AT_image'):
-            self.AT_image0.draw()
-            self.AT_image1.draw()
         self.session.win.flip()
 
     def get_events(self):
@@ -324,8 +602,8 @@ class FeedbackTrial(Trial):
         text_position_x = self.session.settings['various'].get('text_position_x')
         text_position_y = self.session.settings['various'].get('text_position_y')
 
-        if (self.session.res_feedback.count(1) + self.session.res_feedback.count(-1)) != 0:
-            c = self.session.res_feedback.count(1) / (self.session.res_feedback.count(1) + self.session.res_feedback.count(-1))
+        if (self.session.resp_task.count(1) + self.session.resp_task.count(-1)) != 0:
+            c = self.session.resp_task.count(1) / (self.session.resp_task.count(1) + self.session.resp_task.count(-1))
             ACC = c*100
         else:
             ACC = 0

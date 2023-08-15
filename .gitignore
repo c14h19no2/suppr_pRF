@@ -2,7 +2,7 @@ data
 docs
 paper
 slides
-experiments/singleton/logs/**
-experiments/prf/logs/**
+experiments/fMRI/logs/**
+analysis/**
 __pycache__
 .DS_Store
