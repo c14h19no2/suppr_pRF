@@ -66,4 +66,5 @@ various:
   text_height: 40
   text_position_x: 0
   text_position_y: 100
-  buttons: ['left', 'right']
+  buttons_train: ['left', 'right']
+  buttons_test: ['b', 'y']  # right index finger : b; right middle finger: y

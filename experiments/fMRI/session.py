@@ -340,7 +340,7 @@ class PredSession(PylinkEyetrackerSession):
         # Create trials
         ind_TaskTrial = 0
         ind_PingTrial = 0
-        self.resp_task = np.full(len(self.TD_pattern), False) # record if the response is correct for each task trial
+        self.resp_task = np.full(48, False) # record if the response is correct for each task trial
         self.resp_ping = np.empty(0) # record if the response is correct for each non-task trial
         # print('final TD_pattern')
         # print(self.TD_pattern)
@@ -350,20 +350,25 @@ class PredSession(PylinkEyetrackerSession):
                 parameters  = {'angle_1': self.TD_pattern[ind_TaskTrial, 0], 
                                'ori_1': self.oris_gabors[ind_TaskTrial, 0], 
                                'angle_2': self.TD_pattern[ind_TaskTrial, 1], 
-                               'ori_2': self.oris_gabors[ind_TaskTrial, 1]}
-                if self.oris_gabors[ind_TaskTrial, 0] == 135:
-                    corr_key = self.settings['various'].get('buttons')[0]
-                elif self.oris_gabors[ind_TaskTrial, 0] == 45:
-                    corr_key = self.settings['various'].get('buttons')[1]
-                else:
-                    print(self.oris_gabors[ind_TaskTrial, 0])
-                    raise ValueError("target location should be 45 or 135")
-                keys = self.settings['various'].get('buttons')
+                               'ori_2': self.oris_gabors[ind_TaskTrial, 1],
+                               'ind_TaskTrial': ind_TaskTrial,}
+
                 if self.stage == 'test':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['stimuli'].get('ITI_time')]
                     phase_names = ['fixation', 'stimulus', 'ITI']
+
+                    # setup keys
+                    keys = self.settings['various'].get('buttons_test')
+                    if self.oris_gabors[ind_TaskTrial, 0] == 135:
+                        corr_key = self.settings['various'].get('buttons_test')[0]
+                    elif self.oris_gabors[ind_TaskTrial, 0] == 45:
+                        corr_key = self.settings['various'].get('buttons_test')[1]
+                    else:
+                        print(self.oris_gabors[ind_TaskTrial, 0])
+                        raise ValueError("target location should be 45 or 135")
+
                     self.trials.append(
                             TaskTrial(
                                 session=self,
@@ -384,6 +389,17 @@ class PredSession(PylinkEyetrackerSession):
                                     self.settings['design'].get('resp_overtime'),
                                     self.settings['stimuli'].get('feedback_time')]
                     phase_names = ['fixation', 'stimulus', 'resp_overtime', 'feedback']
+
+                    # setup keys
+                    if self.oris_gabors[ind_TaskTrial, 0] == 135:
+                        corr_key = self.settings['various'].get('buttons_train')[0]
+                    elif self.oris_gabors[ind_TaskTrial, 0] == 45:
+                        corr_key = self.settings['various'].get('buttons_train')[1]
+                    else:
+                        print(self.oris_gabors[ind_TaskTrial, 0])
+                        raise ValueError("target location should be 45 or 135")
+                    keys = self.settings['various'].get('buttons_train')
+
                     self.trials.append(
                             TaskTrial_train(
                                 session=self,
@@ -474,7 +490,7 @@ class PredSession(PylinkEyetrackerSession):
             
             self.trial_counter += 1
 
-        # self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter))
+        self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter))
 
     def _create_locations(self):
         self.angles_gabors = [int(i) for i in np.linspace(45, 360+45, 4, endpoint=False)]%np.array([360])
