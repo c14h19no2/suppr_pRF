@@ -19,7 +19,7 @@ from PIL import Image
 from psychopy import logging
 import scipy.stats as ss
 from scipy.stats import expon
-from psychopy.visual import GratingStim, TextStim
+from psychopy.visual import GratingStim, TextStim, Circle
 from psychopy.core import getTime
 from psychopy import parallel
 from exptools2.core import Session, PylinkEyetrackerSession
@@ -248,7 +248,7 @@ class PredSession(PylinkEyetrackerSession):
             contrast=1,
             units="deg")
             
-        for i, (angle, ori) in enumerate(list(itertools.product(self.angles_gabors, np.array([0, 45, 135, 180]).astype(int)))):
+        for _, (angle, ori) in enumerate(list(itertools.product(self.angles_gabors, np.array([0, 45, 135, 180]).astype(int)))):
             # print(angle, ori)
             self.gabors[(angle, ori)] = Gabors(
                 win=self.win, 
@@ -275,7 +275,7 @@ class PredSession(PylinkEyetrackerSession):
             contrast=1,
             units="deg")
         
-        for i, (angle, ori) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180]))):
+        for _, (angle, ori) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180]))):
             # print(angle, ori)
             self.checkerboards[(angle, ori)] = Checkerboards(
                 win=self.win, 
@@ -292,8 +292,20 @@ class PredSession(PylinkEyetrackerSession):
         self.gabors['test'].draw()
         self.checkerboards['test'].draw()
         
+
+        self.fsmask = Circle(
+            win=self.win,
+            units="deg",
+            radius=50,
+            pos=[0,0],
+            edges=360,
+            fillColor=0,
+            lineColor=0,
+        )
+        self.fsmask.draw()
+
         self.win.flip()
-        # time. sleep(15)
+        # time. sleep(5)
         self.win.flip()
 
     def create_trials(self):
