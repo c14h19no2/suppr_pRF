@@ -291,7 +291,6 @@ class PredSession(PylinkEyetrackerSession):
 
         self.gabors['test'].draw()
         self.checkerboards['test'].draw()
-        
 
         self.fsmask = Circle(
             win=self.win,

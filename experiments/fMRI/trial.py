@@ -427,6 +427,7 @@ class InstructionTrial(Trial):
 
     def draw(self):
         self.session.fixation_w.draw()
+        self.session.fixation_dot.draw()
         self.text.draw()
         self.session.win.flip()
 
@@ -454,8 +455,9 @@ class DummyWaiterTrial(InstructionTrial):
         self.session.fixation_w.draw()
         if self.phase == 0:
             self.text.draw()
+            self.session.fixation_dot.draw()
         else:
-            # self.session.report_fixation.draw()
+            self.session.fixation_dot.draw()
             pass
         self.session.win.flip()
 
@@ -492,7 +494,7 @@ class OutroTrial(InstructionTrial):
 
 
 class FeedbackTrial(Trial):
-    """ Simple trial with instruction text. """
+    """ Simple trial with feedback text. """
 
     def __init__(self, session, trial_nr, phase_durations=[np.inf],
                  txt=None, keys=None, draw_each_frame=False, **kwargs):
