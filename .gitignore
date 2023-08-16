@@ -3,6 +3,7 @@ docs
 paper
 slides
 experiments/fMRI/logs/**
+experiment/fMRI/test/logs/**
 analysis/**
 __pycache__
 .DS_Store
