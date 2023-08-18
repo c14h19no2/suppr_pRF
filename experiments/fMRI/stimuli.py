@@ -179,7 +179,7 @@ class Gabors(object):
         self.gabor = GratingStim(
             win,
             tex='sin',
-            mask='gauss',
+            mask='raisedCos',
             size=size,
             sf=sf,
             ori=ori,
@@ -212,7 +212,7 @@ class Checkerboards(object):
         self.checkerboards = GratingStim(
             win,
             tex="sqrXsqr",
-            mask="gauss",
+            mask="raisedCos",
             size=size,
             sf=sf,
             ori=ori,
