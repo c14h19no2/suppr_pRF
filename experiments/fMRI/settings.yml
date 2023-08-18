@@ -39,7 +39,7 @@ stimuli:
   fixation_size_pixels: 1080
   cue_size_pixels: 15 # calibre of fixation dot
   cue_size_deg: 0.5 # 1.5 deg?
-  stim_size_deg: 1 # degree
+  stim_size_deg: 0.7 # degree
   refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   fixdot_refresh_time: 0.4
   fixdot_flickering_rate: 15 # hz

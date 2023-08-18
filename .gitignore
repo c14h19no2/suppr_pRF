@@ -2,6 +2,7 @@ data
 docs
 paper
 slides
+experiments/online/**
 experiments/fMRI/logs/**
 experiment/fMRI/test/logs/**
 analysis/**
