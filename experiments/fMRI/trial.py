@@ -132,8 +132,6 @@ class TaskTrial(Trial):
             while getTime() - start_time <= self.phase_durations[0]:
                 self.session.fixation_w.draw()
                 if current_frame % (2*self.freq) < self.freq:
-                    # print(current_frame)
-                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
                     self.session.fixation_dot.inner_circle.opacity = current_frame%2
                     self.session.fixation_dot.outer_circle.opacity = current_frame%2
                     self.session.fixation_dot.draw()
@@ -186,8 +184,6 @@ class TaskTrial_train(TaskTrial):
             while getTime() - start_time <= self.phase_durations[0]:
                 self.session.fixation_w.draw()
                 if current_frame % (2*self.freq) < self.freq:
-                    # print(current_frame)
-                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
                     self.session.fixation_dot.inner_circle.opacity = current_frame%2
                     self.session.fixation_dot.outer_circle.opacity = current_frame%2
                     self.session.fixation_dot.draw()
