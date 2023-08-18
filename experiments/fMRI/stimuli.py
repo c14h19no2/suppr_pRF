@@ -191,14 +191,6 @@ class Gabors(object):
             **kwargs
         )
 
-        # self.gabor = GratingStim(
-        #     win,
-        #     tex='sin', 
-        #     mask='gauss',
-        #     size=256,
-        #     sf=0.08,
-        # )
-
     def draw(self):
         self.gabor.draw()
 
