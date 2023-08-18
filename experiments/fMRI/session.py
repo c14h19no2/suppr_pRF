@@ -151,14 +151,13 @@ class PredSession(PylinkEyetrackerSession):
             self.oris_gabors[i, 0] = rng.choice([45, 135])
             self.oris_gabors[i, 1] = rng.choice([0, 180])
 
-        # Create Ping trials, in each trial 2 pings are displayed. 
-        # each location appears 4 times in each run (24 pings / 2 pings * 4 times = 48 trials)
-        self.ping_pairs = np.empty((0,2))
-        for i in range(int(48/12)):
-            self.ping_pairs = np.concatenate((self.ping_pairs, self._create_ping_pairs()), axis=0)
-        
-        self.ping_pairs = self.ping_pairs.astype(int)
-        # print(self.ping_pairs)
+        # Create Ping trials, in each trial 1 pings are displayed. 
+        self.seq_ping = np.empty((0,1))
+        for i in range(int(48/len(self.angles_pings))):
+            self.seq_ping = np.concatenate((self.seq_ping, 
+                                              np.array(rng.sample(sorted(self.angles_pings), 
+                                                         len(self.angles_pings)))[:, np.newaxis]), 
+                                                         axis=0)
 
         # Create sequence of trials
         if self.stage == 'test':
@@ -428,10 +427,8 @@ class PredSession(PylinkEyetrackerSession):
                 ind_TaskTrial += 1
             # Ping trials
             elif trial_type == 'PingTrial':
-                parameters  = {'angle_1':self.ping_pairs[ind_PingTrial ,0], 
-                               'ori_1':0, 
-                               'angle_2':self.ping_pairs[ind_PingTrial ,1], 
-                               'ori_2':0}
+                parameters  = {'angle_1':self.seq_ping[ind_PingTrial ,0], 
+                               'ori_1':0,}
                 keys = None
                 if self.stage == 'train':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 

@@ -256,7 +256,6 @@ class PingTrial(Trial):
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
             self.session.checkerboards[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
-            self.session.checkerboards[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
             self.session.fixation_w.draw()
