@@ -50,8 +50,6 @@ class TestTrial(Trial):
             while getTime() - start_time <= self.phase_durations[0]:
                 self.session.fixation_w.draw()
                 if current_frame % (2*self.freq) < self.freq:
-                    # print(current_frame)
-                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
                     self.session.fixation_dot.circle.opacity = current_frame%2
                     self.session.fixation_dot.draw()
                 self.session.win.flip()
@@ -229,9 +227,6 @@ class TaskTrial_train(TaskTrial):
                         self.stop_phase()
 
 class PingTrial(Trial):
-    """
-    
-    """
     def __init__(self, session, trial_nr, phase_durations, phase_names,
                  parameters, keys, timing, verbose=True, draw_each_frame=False):
         super().__init__(session, trial_nr, phase_durations, phase_names,
@@ -250,8 +245,6 @@ class PingTrial(Trial):
             while getTime() - start_time <= self.phase_durations[0]:
                 self.session.fixation_w.draw()
                 if current_frame % (2*self.freq) < self.freq:
-                    # print(current_frame)
-                    # self.session.fixation_dot.circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
                     self.session.fixation_dot.inner_circle.opacity = current_frame%2
                     self.session.fixation_dot.outer_circle.opacity = current_frame%2
                     self.session.fixation_dot.draw()
@@ -279,7 +272,6 @@ class PingTrial(Trial):
                 if self.keys is None:
                     if events:
                         pass
-                        # self.stop_phase()
                 else:
                     for key, t in events:
                         if key in self.keys:
@@ -299,9 +291,6 @@ class PingTrial(Trial):
         super().run()
 
 class RestingTrial(Trial):
-    """
-    
-    """
     def __init__(self, session, trial_nr, phase_durations, phase_names,
                  parameters, keys, timing, verbose=True, draw_each_frame=False):
         super().__init__(session, trial_nr, phase_durations, phase_names,
@@ -327,13 +316,6 @@ class RestingTrial(Trial):
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
             self.session.win.flip()
-
-    # def get_events(self):
-    #     events = super().get_events()
-    #     if self.keys is None:
-    #         pass
-    #     else:
-    #         pass
 
     def run(self):
         self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_resting'))
@@ -361,8 +343,6 @@ class SuckerTrial(Trial):
             while getTime() - start_time <= self.phase_durations[0]:
                 self.session.fixation_w.draw()
                 if current_frame % (2*self.freq) < self.freq:
-                    # print(current_frame)
-                    # self.session.fixation_dot.inner_circle.opacity = 0.5 * np.sin(2 * np.pi * self.freq * getTime()) + 0.5
                     self.session.fixation_dot.inner_circle.opacity = current_frame%2
                     self.session.fixation_dot.outer_circle.opacity = current_frame%2
                     self.session.fixation_dot.draw()
