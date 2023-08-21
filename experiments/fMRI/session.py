@@ -21,7 +21,6 @@ import scipy.stats as ss
 from scipy.stats import expon
 from psychopy.visual import GratingStim, TextStim, Circle
 from psychopy.core import getTime
-from psychopy import parallel
 from exptools2.core import Session, PylinkEyetrackerSession
 from stimuli import FixationBullsEye, FixationCue, Gabors, Checkerboards
 from trial import (
@@ -81,15 +80,6 @@ class PredSession(PylinkEyetrackerSession):
         # Create log folder if it does not exist
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
-
-        # set up parallel port triggering
-        try:
-            self.port = parallel.ParallelPort(address=0x0378)
-            self.port.setData(0)
-            self.parallel_triggering = True
-        except:
-            logging.warn(f"Attempted import of Parallel Port failed")
-            self.parallel_triggering = False
 
         # set realtime mode for higher timing precision
         pylink.beginRealTimeMode(100)
@@ -583,20 +573,6 @@ class PredSession(PylinkEyetrackerSession):
                 yaml.dump(
                     self.data_yml_log, ymlseqfile, default_flow_style=False
                 )
-
-    def parallel_trigger(self, trigger):
-        if self.parallel_triggering:
-            self.port.setData(trigger)
-            time.sleep(self.settings["design"].get("ttl_trigger_delay"))
-            self.port.setData(0)
-            time.sleep(self.settings["design"].get("ttl_trigger_delay"))
-            # P = windll.inpoutx64
-            # P.Out32(0x0378, self.settings['design'].get('ttl_trigger_blank')) # send the event code (could be 1-20)
-            # time.sleep(self.settings['design'].get('ttl_trigger_delay')) # wait for 1 ms for receiving the code
-            # P.Out32(0x0378, 0) # send a code to clear the register
-            # time.sleep(self.settings['design'].get('ttl_trigger_delay')) # wait for 1 ms"""
-        else:
-            logging.warn(f"Would have sent trigger {trigger}")
 
     def run(self):
         """Runs experiment."""

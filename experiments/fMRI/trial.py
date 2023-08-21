@@ -163,7 +163,6 @@ class TaskTrial(Trial):
                         pass
 
     def run(self):
-        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_task'))
         super().run()
 
 class TaskTrial_train(TaskTrial):
@@ -286,7 +285,6 @@ class PingTrial(Trial):
                             pass
 
     def run(self):
-        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_ping'))
         super().run()
 
 class RestingTrial(Trial):
@@ -317,7 +315,6 @@ class RestingTrial(Trial):
             self.session.win.flip()
 
     def run(self):
-        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_resting'))
         super().run()
 
 class SuckerTrial(Trial):
@@ -369,7 +366,6 @@ class SuckerTrial(Trial):
             pass
 
     def run(self):
-        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_sucker'))
         super().run()
 
 class InstructionTrial(Trial):
@@ -449,7 +445,6 @@ class DummyWaiterTrial(InstructionTrial):
                         ## TRIGGER HERE
                         #####################################################
                         self.session.experiment_start_time = getTime()
-                        self.session.parallel_trigger(self.session.settings['design'].get('ttl_trigger_start'))
 
 class OutroTrial(InstructionTrial):
     """ Simple trial with only fixation cross.  """
