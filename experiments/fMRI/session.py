@@ -347,7 +347,8 @@ class PredSession(PylinkEyetrackerSession):
         for trial_type in self.seq_trials:
             # Task trials
             if trial_type == 'TaskTrial':
-                parameters  = {'angle_1': self.TD_pattern[ind_TaskTrial, 0], 
+                parameters  = {'trial_type': 'TaskTrial',
+                               'angle_1': self.TD_pattern[ind_TaskTrial, 0], 
                                'ori_1': self.oris_gabors[ind_TaskTrial, 0], 
                                'angle_2': self.TD_pattern[ind_TaskTrial, 1], 
                                'ori_2': self.oris_gabors[ind_TaskTrial, 1],
@@ -417,7 +418,8 @@ class PredSession(PylinkEyetrackerSession):
                 ind_TaskTrial += 1
             # Ping trials
             elif trial_type == 'PingTrial':
-                parameters  = {'angle_1':self.seq_ping[ind_PingTrial ,0], 
+                parameters  = {'trial_type': 'PingTrial',
+                               'angle_1':self.seq_ping[ind_PingTrial ,0], 
                                'ori_1':0,}
                 keys = None
                 if self.stage == 'train':
@@ -445,7 +447,7 @@ class PredSession(PylinkEyetrackerSession):
                 ind_PingTrial += 1
             # Resting trials
             elif trial_type == 'RestingTrial':
-                parameters = {}
+                parameters = {'trial_type': 'RestingTrial',}
                 phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                    self.settings['stimuli'].get('stim_refresh_time'),
                                    self.settings['stimuli'].get('ITI_time')]
@@ -465,7 +467,7 @@ class PredSession(PylinkEyetrackerSession):
                     )
             # Sucker trials
             elif trial_type == 'SuckerTrial':
-                parameters = {}
+                parameters = {'trial_type': 'SuckerTrial',}
                 phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                    self.settings['stimuli'].get('stim_refresh_time'), 
                                    self.settings['stimuli'].get('ITI_time')]
