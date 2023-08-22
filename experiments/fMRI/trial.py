@@ -504,7 +504,7 @@ class FeedbackTrial(Trial):
         self.text_0.draw()
         self.text_1.draw()
         self.session.win.flip()
-        print(self.session.resp_task)
+        # print(self.session.resp_task)
 
     def get_events(self):
         events = super().get_events()

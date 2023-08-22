@@ -135,11 +135,18 @@ class PredSession(PylinkEyetrackerSession):
         print(self.TD_pattern)
         np.random.shuffle(self.TD_pattern)
         
-        # Create oritentation of gabors,
+        # Create oritentation of gabors, can be perpendicular or tilted
         self.oris_gabors = np.empty((len(self.TD_pattern),2))
-        for i in range(len(self.TD_pattern)):
-            self.oris_gabors[i, 0] = rng.choice([45, 135])
-            self.oris_gabors[i, 1] = rng.choice([0, 180])
+        oris_gabors_list_tt = np.hstack([np.repeat(45, int(self.oris_gabors.shape[0]/2)), np.repeat(135, self.oris_gabors.shape[0]-int(self.oris_gabors.shape[0]/2))])
+        oris_gabors_list_pp = np.hstack([np.repeat(0, int(self.oris_gabors.shape[0]/2)), np.repeat(180, self.oris_gabors.shape[0]-int(self.oris_gabors.shape[0]/2))])
+        np.random.shuffle(oris_gabors_list_tt)
+        self.oris_gabors[:, 0] = deepcopy(oris_gabors_list_tt)
+        np.random.shuffle(oris_gabors_list_pp)
+        self.oris_gabors[:, 1] = deepcopy(oris_gabors_list_pp)
+
+        # for i in range(len(self.TD_pattern)):
+        #     self.oris_gabors[i, 0] = rng.choice([45, 135])
+        #     self.oris_gabors[i, 1] = rng.choice([0, 180])
 
         # Create Ping trials, in each trial 1 pings are displayed. 
         self.seq_ping = np.empty((0,1))
