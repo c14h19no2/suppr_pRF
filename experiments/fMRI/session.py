@@ -155,6 +155,8 @@ class PredSession(PylinkEyetrackerSession):
                                               np.array(rng.sample(sorted(self.angles_pings), 
                                                          len(self.angles_pings)))[:, np.newaxis]), 
                                                          axis=0)
+        self.oris_pings = np.hstack([np.repeat(0, int(self.seq_ping.shape[0]/2)), np.repeat(45, self.seq_ping.shape[0]-int(self.seq_ping.shape[0]/2))])
+        np.random.shuffle(self.oris_pings)
 
         # Create sequence of trials
         if self.stage == 'test':
@@ -427,7 +429,7 @@ class PredSession(PylinkEyetrackerSession):
             elif trial_type == 'PingTrial':
                 parameters  = {'trial_type': 'PingTrial',
                                'angle_1':self.seq_ping[ind_PingTrial ,0], 
-                               'ori_1':0,}
+                               'ori_1':self.oris_pings[ind_PingTrial],}
                 keys = None
                 if self.stage == 'train':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
