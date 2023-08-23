@@ -106,13 +106,49 @@ class PredSession(PylinkEyetrackerSession):
         self.TD_pattern:
             - used to determine the target and distractor locations
             - each run includes 48 trials, 75% HPL are distractors
+        self.TD_list:
+            - used to determine the target and distractor locations
         self.oris_gabors:
             - used to determine the orientation of gabors
             - Target gabor is always tilted, distractor gabor is always horizontal or vertical
         self.ping_pairs:
             - used to determine the ping locations
         """
-        
+
+        # Create sequence of trials
+        if self.stage == 'test':
+            self.nr_task = 48
+            self.nr_ping = 48
+            self.nr_rest = 36
+            self.nr_sucker = 24
+            self.seq_trials = np.hstack([
+                                        np.tile('TaskTrial', self.nr_task), 
+                                        np.tile('PingTrial', self.nr_ping), 
+                                        np.tile('RestingTrial', self.nr_rest), 
+                                        np.tile('SuckerTrial', self.nr_sucker)
+                                        ])
+        elif self.stage == 'train':
+            if self.run_nr in [0,]:
+                self.nr_task = 192
+                self.nr_ping = 0
+                self.nr_rest = 0
+                self.nr_sucker = 0
+                self.seq_trials = np.hstack([
+                                        np.tile('TaskTrial', self.nr_task), 
+                                        ])
+            else:
+                self.nr_task = 48
+                self.nr_ping = 48
+                self.nr_rest = 0
+                self.nr_sucker = 0
+                self.seq_trials = np.hstack([
+                                        np.tile('TaskTrial', 48), 
+                                        np.tile('PingTrial', 48),
+                                        ])
+        else:
+            raise ValueError("stage should be 'test' or 'train'")
+        np.random.shuffle(self.seq_trials)
+
         if self.condition == 'neutral':
             self.HPL = None
         elif self.condition == 'bias1':
@@ -122,7 +158,7 @@ class PredSession(PylinkEyetrackerSession):
         else: 
             raise ValueError("condition should be 'neutral', 'bias1' or 'bias2'")
 
-        # Create [target, distractor] pattern, each run includes 48 trials, 75% HPL are distractors
+        # Create [target, distractor] pattern, each pattern includes 48 trials, 75% HPL are distractors
         self.TD_pattern = list(itertools.permutations(self.angles_gabors, 2))
         self.TD_pattern = np.tile(self.TD_pattern, (4, 1))
         if self.HPL is not None:
@@ -133,47 +169,32 @@ class PredSession(PylinkEyetrackerSession):
                     self.TD_pattern[i, 1] = tmp
         print("Original TD_pattern")
         print(self.TD_pattern)
-        np.random.shuffle(self.TD_pattern)
+
+        self.TD_list = np.tile(self.TD_pattern, (int(self.nr_task/len(self.TD_pattern)), 1))
+        np.random.shuffle(self.TD_list)
         
         # Create oritentation of gabors, can be perpendicular or tilted
-        self.oris_gabors = np.empty((len(self.TD_pattern),2))
+        self.oris_gabors = np.empty((self.nr_task,2))
         oris_gabors_list_tt = np.hstack([np.repeat(45, int(self.oris_gabors.shape[0]/2)), np.repeat(135, self.oris_gabors.shape[0]-int(self.oris_gabors.shape[0]/2))])
-        oris_gabors_list_pp = np.hstack([np.repeat(0, int(self.oris_gabors.shape[0]/2)), np.repeat(180, self.oris_gabors.shape[0]-int(self.oris_gabors.shape[0]/2))])
+        oris_gabors_list_pp = np.hstack([np.repeat(0, int(self.oris_gabors.shape[0]/2)), np.repeat(90, self.oris_gabors.shape[0]-int(self.oris_gabors.shape[0]/2))])
         np.random.shuffle(oris_gabors_list_tt)
         self.oris_gabors[:, 0] = deepcopy(oris_gabors_list_tt)
         np.random.shuffle(oris_gabors_list_pp)
         self.oris_gabors[:, 1] = deepcopy(oris_gabors_list_pp)
 
-        # for i in range(len(self.TD_pattern)):
+        # for i in range(len(self.TD_list)):
         #     self.oris_gabors[i, 0] = rng.choice([45, 135])
         #     self.oris_gabors[i, 1] = rng.choice([0, 180])
 
         # Create Ping trials, in each trial 1 pings are displayed. 
         self.seq_ping = np.empty((0,1))
-        for i in range(int(48/len(self.angles_pings))):
+        for i in range(int(self.nr_ping/len(self.angles_pings))):
             self.seq_ping = np.concatenate((self.seq_ping, 
                                               np.array(rng.sample(sorted(self.angles_pings), 
                                                          len(self.angles_pings)))[:, np.newaxis]), 
                                                          axis=0)
         self.oris_pings = np.hstack([np.repeat(0, int(self.seq_ping.shape[0]/2)), np.repeat(45, self.seq_ping.shape[0]-int(self.seq_ping.shape[0]/2))])
         np.random.shuffle(self.oris_pings)
-
-        # Create sequence of trials
-        if self.stage == 'test':
-            self.seq_trials = np.hstack([
-                                        np.tile('TaskTrial', 48), 
-                                        np.tile('PingTrial', 48), 
-                                        np.tile('RestingTrial', 36), 
-                                        np.tile('SuckerTrial', 24)
-                                        ])
-        elif self.stage == 'train':
-            self.seq_trials = np.hstack([
-                                        np.tile('TaskTrial', 48), 
-                                        np.tile('PingTrial', 48),
-                                        ])
-        else:
-            raise ValueError("stage should be 'test' or 'train'")
-        np.random.shuffle(self.seq_trials)
 
     def _create_ping_pairs(self):
         """
@@ -246,7 +267,7 @@ class PredSession(PylinkEyetrackerSession):
             contrast=1,
             units="deg")
             
-        for _, (angle, ori) in enumerate(list(itertools.product(self.angles_gabors, np.array([0, 45, 135, 180]).astype(int)))):
+        for _, (angle, ori) in enumerate(list(itertools.product(self.angles_gabors, np.array([0, 45, 90, 135]).astype(int)))):
             # print(angle, ori)
             self.gabors[(angle, ori)] = Gabors(
                 win=self.win, 
@@ -349,17 +370,17 @@ class PredSession(PylinkEyetrackerSession):
         # Create trials
         ind_TaskTrial = 0
         ind_PingTrial = 0
-        self.resp_task = np.full(48, False) # record if the response is correct for each task trial
+        self.resp_task = np.full(self.TD_list.shape[0], False) # record if the response is correct for each task trial
         self.resp_ping = np.empty(0) # record if the response is correct for each non-task trial
-        # print('final TD_pattern')
-        # print(self.TD_pattern)
+        # print('final TD_list')
+        # print(self.TD_list)
         for trial_type in self.seq_trials:
             # Task trials
             if trial_type == 'TaskTrial':
                 parameters  = {'trial_type': 'TaskTrial',
-                               'angle_1': self.TD_pattern[ind_TaskTrial, 0], 
+                               'angle_1': self.TD_list[ind_TaskTrial, 0], 
                                'ori_1': self.oris_gabors[ind_TaskTrial, 0], 
-                               'angle_2': self.TD_pattern[ind_TaskTrial, 1], 
+                               'angle_2': self.TD_list[ind_TaskTrial, 1], 
                                'ori_2': self.oris_gabors[ind_TaskTrial, 1],
                                'ind_TaskTrial': ind_TaskTrial,}
 
