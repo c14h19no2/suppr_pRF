@@ -378,10 +378,10 @@ class PredSession(PylinkEyetrackerSession):
             # Task trials
             if trial_type == 'TaskTrial':
                 parameters  = {'trial_type': 'TaskTrial',
-                               'angle_1': self.TD_list[ind_TaskTrial, 0], 
-                               'ori_1': self.oris_gabors[ind_TaskTrial, 0], 
-                               'angle_2': self.TD_list[ind_TaskTrial, 1], 
-                               'ori_2': self.oris_gabors[ind_TaskTrial, 1],
+                               'angle_T': self.TD_list[ind_TaskTrial, 0], 
+                               'ori_T': self.oris_gabors[ind_TaskTrial, 0], 
+                               'angle_D': self.TD_list[ind_TaskTrial, 1], 
+                               'ori_D': self.oris_gabors[ind_TaskTrial, 1],
                                'ind_TaskTrial': ind_TaskTrial,}
 
                 if self.stage == 'test':
@@ -449,8 +449,8 @@ class PredSession(PylinkEyetrackerSession):
             # Ping trials
             elif trial_type == 'PingTrial':
                 parameters  = {'trial_type': 'PingTrial',
-                               'angle_1':self.seq_ping[ind_PingTrial ,0], 
-                               'ori_1':self.oris_pings[ind_PingTrial],}
+                               'angle_Ping':self.seq_ping[ind_PingTrial ,0], 
+                               'ori_Ping':self.oris_pings[ind_PingTrial],}
                 keys = None
                 if self.stage == 'train':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 

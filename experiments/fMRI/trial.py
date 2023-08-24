@@ -140,8 +140,8 @@ class TaskTrial(Trial):
             self.session.fixation_dot.inner_circle.opacity = 1
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
-            self.session.gabors[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
-            self.session.gabors[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
+            self.session.gabors[(self.parameters['angle_T'], self.parameters['ori_T'])].draw()
+            self.session.gabors[(self.parameters['angle_D'], self.parameters['ori_D'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
             self.session.fixation_w.draw()
@@ -191,8 +191,8 @@ class TaskTrial_train(TaskTrial):
             self.session.fixation_dot.inner_circle.opacity = 1
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
-            self.session.gabors[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
-            self.session.gabors[(self.parameters['angle_2'], self.parameters['ori_2'])].draw()
+            self.session.gabors[(self.parameters['angle_T'], self.parameters['ori_T'])].draw()
+            self.session.gabors[(self.parameters['angle_D'], self.parameters['ori_D'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
             self.session.fixation_w.draw()
@@ -254,7 +254,7 @@ class PingTrial(Trial):
             self.session.fixation_dot.inner_circle.opacity = 1
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
-            self.session.checkerboards[(self.parameters['angle_1'], self.parameters['ori_1'])].draw()
+            self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
             self.session.fixation_w.draw()
@@ -481,7 +481,11 @@ class FeedbackTrial(Trial):
 
         ACC = np.mean(self.session.resp_task) * 100
 
-        txt_0 = f'Your score in this block is {str(math.ceil(ACC))}%.'
+        if self.session.stage == 'train':
+            txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}, Your score in this block is {str(math.ceil(ACC))}%.'
+        elif self.session.stage == 'test':
+            txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}.'
+        
         txt_1 = f'Please ask the experimenter to continue...'
         self.text_0 = TextStim(self.session.win, txt_0,
                              height=txt_height, 
