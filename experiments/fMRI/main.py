@@ -13,7 +13,7 @@ parser.add_argument('subject', default=None, nargs='?',
 parser.add_argument('ses', default=None, type=int, nargs='?', 
                     help='the ses nr of the experiment, an integer, such as 1, or 99.')
 parser.add_argument('stage', default=None, type=str, nargs='?', 
-                    help="the stage of the experimental, can be 'train' or 'test'.")
+                    help="the stage of the experimental, can be 'practice', 'train' or 'test'.")
 parser.add_argument('condition', default=None, type=str, nargs='?', 
                     help="the condition of the experiment, can be 'neutral', 'bias1', or 'bias2'.")
 parser.add_argument('run', default=None, type=int, nargs='?', 
@@ -39,7 +39,7 @@ if not isinstance(ses, int):
     raise ValueError(
         'ses_nr must be a integer, such as 1, or 99')
 
-if stage not in ['train', 'test']:
+if stage not in ['practice', 'train', 'test']:
     raise ValueError(
         'stage must be a string, such as train, or test')
 

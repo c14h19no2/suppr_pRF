@@ -116,7 +116,15 @@ class PredSession(PylinkEyetrackerSession):
         """
 
         # Create sequence of trials
-        if self.stage == 'test':
+        if self.stage == 'practice':
+            self.nr_task = 48
+            self.nr_ping = 0
+            self.nr_rest = 0
+            self.nr_sucker = 0
+            self.seq_trials = np.hstack([
+                                        np.tile('TaskTrial', self.nr_task), 
+                                        ])
+        elif self.stage == 'test':
             self.nr_task = 48
             self.nr_ping = 48
             self.nr_rest = 36
@@ -146,7 +154,7 @@ class PredSession(PylinkEyetrackerSession):
                                         np.tile('PingTrial', 48),
                                         ])
         else:
-            raise ValueError("stage should be 'test' or 'train'")
+            raise ValueError("stage should be 'practice', 'train', or 'test'")
         np.random.shuffle(self.seq_trials)
 
         if self.condition == 'neutral':
@@ -414,7 +422,7 @@ class PredSession(PylinkEyetrackerSession):
                                 draw_each_frame=False,
                             )
                         )
-                elif self.stage == 'train':
+                elif self.stage in ['practice', 'train']:
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime'),

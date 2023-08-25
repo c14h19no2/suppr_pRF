@@ -266,7 +266,7 @@ class PingTrial(Trial):
     def get_events(self):
         events = super().get_events()
         if self.phase == 2 or self.phase == 1:
-            if self.session.stage == 'train':
+            if self.session.stage in ['practice', 'train']:
                 if self.keys is None:
                     if events:
                         pass
@@ -481,7 +481,7 @@ class FeedbackTrial(Trial):
 
         ACC = np.mean(self.session.resp_task) * 100
 
-        if self.session.stage == 'train':
+        if self.session.stage in ['practice', 'train']:
             txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}, Your score in this block is {str(math.ceil(ACC))}%.'
         elif self.session.stage == 'test':
             txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}.'
