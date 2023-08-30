@@ -45,8 +45,7 @@ class PredSession(PylinkEyetrackerSession):
         output_dir,
         subject,
         ses_nr,
-        stage,
-        condition,
+        task,
         run_nr,
         settings_file,
         eyetracker_on=True,
@@ -72,8 +71,7 @@ class PredSession(PylinkEyetrackerSession):
 
         self.subject = subject
         self.ses_nr = ses_nr
-        self.stage = stage
-        self.condition = condition
+        self.task = task
         self.run_nr = run_nr
         self.data_yml_log = {}
 
@@ -116,7 +114,7 @@ class PredSession(PylinkEyetrackerSession):
         """
 
         # Create sequence of trials
-        if self.stage == 'practice':
+        if self.ses_nr == 'practice':
             self.nr_task = 48
             self.nr_ping = 0
             self.nr_rest = 0
@@ -124,7 +122,7 @@ class PredSession(PylinkEyetrackerSession):
             self.seq_trials = np.hstack([
                                         np.tile('TaskTrial', self.nr_task), 
                                         ])
-        elif self.stage == 'test':
+        elif self.ses_nr == 'test':
             self.nr_task = 48
             self.nr_ping = 48
             self.nr_rest = 36
@@ -135,7 +133,7 @@ class PredSession(PylinkEyetrackerSession):
                                         np.tile('RestingTrial', self.nr_rest), 
                                         np.tile('SuckerTrial', self.nr_sucker)
                                         ])
-        elif self.stage == 'train':
+        elif self.ses_nr == 'train':
             if self.run_nr in [0,]:
                 self.nr_task = 192
                 self.nr_ping = 0
@@ -154,17 +152,17 @@ class PredSession(PylinkEyetrackerSession):
                                         np.tile('PingTrial', 48),
                                         ])
         else:
-            raise ValueError("stage should be 'practice', 'train', or 'test'")
+            raise ValueError("session should be 'practice', 'train', or 'test'")
         np.random.shuffle(self.seq_trials)
 
-        if self.condition == 'neutral':
+        if self.task == 'neutral':
             self.HPL = None
-        elif self.condition == 'bias1':
+        elif self.task == 'bias1':
             self.HPL = self.HPL_1
-        elif self.condition == 'bias2':
+        elif self.task == 'bias2':
             self.HPL = self.HPL_2
         else: 
-            raise ValueError("condition should be 'neutral', 'bias1' or 'bias2'")
+            raise ValueError("task should be 'neutral', 'bias1' or 'bias2'")
 
         # Create [target, distractor] pattern, each pattern includes 48 trials, 75% HPL are distractors
         self.TD_pattern = list(itertools.permutations(self.angles_gabors, 2))
@@ -392,7 +390,7 @@ class PredSession(PylinkEyetrackerSession):
                                'ori_D': self.oris_gabors[ind_TaskTrial, 1],
                                'ind_TaskTrial': ind_TaskTrial,}
 
-                if self.stage == 'test':
+                if self.ses_nr == 'test':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['stimuli'].get('ITI_time')]
@@ -422,7 +420,7 @@ class PredSession(PylinkEyetrackerSession):
                                 draw_each_frame=False,
                             )
                         )
-                elif self.stage in ['practice', 'train']:
+                elif self.ses_nr in ['practice', 'train']:
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime'),
@@ -460,11 +458,11 @@ class PredSession(PylinkEyetrackerSession):
                                'angle_Ping':self.seq_ping[ind_PingTrial ,0], 
                                'ori_Ping':self.oris_pings[ind_PingTrial],}
                 keys = None
-                if self.stage == 'train':
+                if self.ses_nr == 'train':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime')]
-                elif self.stage == 'test':
+                elif self.ses_nr == 'test':
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['stimuli'].get('ITI_time')]
@@ -576,7 +574,7 @@ class PredSession(PylinkEyetrackerSession):
         
         self.yml_log = os.path.join(
             self.output_dir,
-            f"sub-{str(self.subject).zfill(2)}_task-predprf.yml",
+            f"sub-{str(self.subject).zfill(2)}_log.yml",
         )
 
         # determine if there is a log file. If so, load it.

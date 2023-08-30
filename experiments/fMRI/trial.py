@@ -266,7 +266,7 @@ class PingTrial(Trial):
     def get_events(self):
         events = super().get_events()
         if self.phase == 2 or self.phase == 1:
-            if self.session.stage in ['practice', 'train']:
+            if self.session.ses_nr in ['practice', 'train']:
                 if self.keys is None:
                     if events:
                         pass
@@ -275,7 +275,7 @@ class PingTrial(Trial):
                         if key in self.keys:
                             self.session.resp_ping = np.append(self.session.resp_ping, 0)
                             # self.stop_phase()
-            elif self.session.stage == 'test':
+            elif self.session.ses_nr == 'test':
                 if self.keys is None:
                     if events:
                         pass
@@ -481,10 +481,10 @@ class FeedbackTrial(Trial):
 
         ACC = np.mean(self.session.resp_task) * 100
 
-        if self.session.stage in ['practice', 'train']:
-            txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}, Your score in this block is {str(math.ceil(ACC))}%.'
-        elif self.session.stage == 'test':
-            txt_0 = f'This is Stage-{self.session.stage} Run-{self.session.run_nr}.'
+        if self.session.ses_nr in ['practice', 'train']:
+            txt_0 = f'This is Session-{self.session.ses_nr} Run-{self.session.run_nr}, Your score in this block is {str(math.ceil(ACC))}%.'
+        elif self.session.ses_nr == 'test':
+            txt_0 = f'This is Session-{self.session.ses_nr} Run-{self.session.run_nr}.'
         
         txt_1 = f'Please ask the experimenter to continue...'
         self.text_0 = TextStim(self.session.win, txt_0,
