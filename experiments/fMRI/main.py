@@ -35,12 +35,12 @@ if subject is None:
 
 if ses not in ['practice', 'train', 'test']:
     raise ValueError(
-        'stage must be a string, such as train, or test')
+        'session must be a string, such as train, or test')
 
 if task not in ['neutral', 'bias1', 'bias2']:
     if task not in ['0', '1', '2']:
         raise ValueError(
-            'condition must be a string, such as neutral, bias1, or bias2, or 0, 1, or 2')
+            'task must be a string, such as neutral, bias1, or bias2, or 0, 1, or 2')
 
 if not isinstance(run, int):
     raise ValueError(
