@@ -13,9 +13,9 @@ monitor:
   # Personal laptop
   #     width: 30
   #     distance: 35
-  name: BB_lab
-  width: 52.6  # width of monitor (in cm)
-  distance: 75  # distance of participant from monitor (in cm)
+  name: psychophysics_lab
+  width: 70.9  # width of monitor (in cm)
+  distance: 198  # distance of participant from monitor (in cm)
   gamma: 1  # specific value for gamma correction
   verbose: False # set this parameter to False when you're running your experiment for real
 
@@ -37,8 +37,8 @@ stimuli:
   outer_fix_linewidth: 1
   fixation_cross_lindwidth: 4
   fixation_size_pixels: 1080
-  cue_size_pixels: 15 # calibre of fixation dot
-  cue_size_deg: 0.5 # 1.5 deg?
+  cue_size_pixels: 5 # calibre of fixation dot
+  cue_size_deg: 0.15 # 1.5 deg?
   stim_size_deg: 0.7 # degree
   refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   fixdot_refresh_time: 0.4
@@ -66,5 +66,5 @@ various:
   text_height: 40
   text_position_x: 0
   text_position_y: 100
-  buttons_train: ['left', 'right']
+  buttons_train: ['2', '4']
   buttons_test: ['b', 'y']  # right index finger : b; right middle finger: y

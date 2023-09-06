@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from psychopy.core import getTime
 from psychopy.visual import Line, Circle, ImageStim, Window, GratingStim, RadialStim, PatchStim
 
 
@@ -46,7 +47,7 @@ class FixationBullsEye(object):
         )
         self.circle3 = Circle(
             win,
-            radius=circle_radius * 0.25,
+            radius=circle_radius * 0.225,
             edges=edges,
             fillColor=None,
             lineColor=self.color,
@@ -66,8 +67,8 @@ class FixationBullsEye(object):
     def draw(self):
         # self.line1.draw()
         # self.line2.draw()
-        self.circle1.draw()
-        self.circle2.draw()
+        # self.circle1.draw()
+        # self.circle2.draw()
         self.circle3.draw()
         self.circle4.draw()
 
@@ -199,8 +200,9 @@ class Checkerboards(object):
     #     self, win, tex, mask, *args, **kwargs
     # ):
     def __init__(
-        self, win, size, sf, ori, ecc=100, angle=0, phase=0, contrast=1, units="deg", *args, **kwargs
+        self, win, size, sf, ori, ecc=100, angle=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
     ):
+        self.temporal_freq = temporal_freq
         self.checkerboards = GratingStim(
             win,
             tex="sqrXsqr",
@@ -215,6 +217,13 @@ class Checkerboards(object):
             *args,
             **kwargs
         )
+        self.last_time = getTime()
 
     def draw(self):
-        self.checkerboards.draw()
+        present_time = getTime()
+        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 2)):
+            self.checkerboards.contrast = -self.checkerboards.contrast
+            self.checkerboards.ori += 45
+            self.last_time = present_time
+        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
+            self.checkerboards.draw()
