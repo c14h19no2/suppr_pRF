@@ -54,12 +54,8 @@ design:
   start_duration: 1.0
   fixation_flicker_time: 0.4
   stim_disp_time: 0.2
-  ITI_time: 2.6 # also waiting for t
-  resp_overtime: 1 # counted as incorrect if overtime
-  ttl_trigger_delay: 0.001 # delay after setting parallel port status for triggers
-  ttl_trigger_bar: 2 # trigger code
-  ttl_trigger_blank: 3 # trigger code
-  ttl_trigger_start: 5 # trigger code
+  ITI_time: 3 # also waiting for t
+  resp_overtime: 1 # counted as incorrect if overtime in training period
 
 various:
   text_width: 1600

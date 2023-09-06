@@ -125,8 +125,8 @@ class PredSession(PylinkEyetrackerSession):
         elif self.ses_nr == 'test':
             self.nr_task = 48
             self.nr_ping = 48
-            self.nr_rest = 36
-            self.nr_sucker = 24
+            self.nr_rest = 12
+            self.nr_sucker = 18
             self.seq_trials = np.hstack([
                                         np.tile('TaskTrial', self.nr_task), 
                                         np.tile('PingTrial', self.nr_ping), 
