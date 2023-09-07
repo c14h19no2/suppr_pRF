@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 parent_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(parent_dir))
-print(sys.path)
 import os
 import glob
 import random
@@ -173,8 +172,6 @@ class PredSession(PylinkEyetrackerSession):
                     tmp = deepcopy(self.TD_pattern[i, 0])
                     self.TD_pattern[i, 0] = self.TD_pattern[i, 1]
                     self.TD_pattern[i, 1] = tmp
-        print("Original TD_pattern")
-        print(self.TD_pattern)
 
         self.TD_list = np.tile(self.TD_pattern, (int(self.nr_task/len(self.TD_pattern)), 1))
         np.random.shuffle(self.TD_list)
@@ -378,8 +375,7 @@ class PredSession(PylinkEyetrackerSession):
         ind_PingTrial = 0
         self.resp_task = np.full(self.TD_list.shape[0], False) # record if the response is correct for each task trial
         self.resp_ping = np.empty(0) # record if the response is correct for each non-task trial
-        # print('final TD_list')
-        # print(self.TD_list)
+
         for trial_type in self.seq_trials:
             # Task trials
             if trial_type == 'TaskTrial':
@@ -581,12 +577,9 @@ class PredSession(PylinkEyetrackerSession):
         if os.path.isfile(self.yml_log):
             with open(self.yml_log, "r") as ymlseqfile:
                 try:
-                    print(ymlseqfile)
-                    print('XXXXXX')
                     yml_random = yaml.safe_load(ymlseqfile)
                 except yaml.YAMLError as exc:
                     print(exc)
-            print(yml_random)
             self.HPL_1 = yml_random.get("design").get("HPL_1")
             self.HPL_2 = yml_random.get("design").get("HPL_2")
 
