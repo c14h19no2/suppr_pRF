@@ -36,7 +36,6 @@ stimuli:
   inner_fix_linewidth: 4
   outer_fix_linewidth: 1
   fixation_cross_lindwidth: 4
-  fixation_size_pixels: 1080
   cue_size_pixels: 5 # calibre of fixation dot
   cue_size_deg: 0.15 # 1.5 deg?
   stim_size_deg: 0.7 # degree

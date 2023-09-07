@@ -536,7 +536,7 @@ class PredSession(PylinkEyetrackerSession):
         self.fixation_cue = {}
         self.fixation_w = FixationBullsEye(
             win=self.win,
-            circle_radius=self.settings["stimuli"].get("fixation_size_pixels"),
+            circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
             **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
         )
