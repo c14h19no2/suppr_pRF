@@ -33,6 +33,7 @@ from trial import (
     DummyWaiterTrial,
     OutroTrial,
     FeedbackTrial,
+    RollDownTheWindowTrial,
 )
 
 rng = random.SystemRandom()
@@ -82,8 +83,8 @@ class PredSession(PylinkEyetrackerSession):
         pylink.beginRealTimeMode(100)
 
         self._create_text_loading()
-        self._create_stimuli()
         self._create_yaml_log()
+        self._create_stimuli()
         self.save_yaml_log()
         self.create_sequences()        
         self.create_trials()
@@ -256,7 +257,6 @@ class PredSession(PylinkEyetrackerSession):
 
         # create fixation cross
         self._create_fixation()
-
         # Set up gabors
         self.gabors = {}
         self.gabors['test'] = Gabors(
@@ -265,6 +265,7 @@ class PredSession(PylinkEyetrackerSession):
             sf=8, 
             ori=45, 
             ecc=self.settings["stimuli"].get("distance_from_center"), 
+            roll_dist=self.roll_dist,
             angle=0, 
             phase=0, 
             contrast=1,
@@ -278,6 +279,7 @@ class PredSession(PylinkEyetrackerSession):
                 sf=8, 
                 ori=ori, 
                 ecc=self.settings["stimuli"].get("distance_from_center"), 
+                roll_dist=self.roll_dist,
                 angle=angle,
                 phase=0, 
                 contrast=1,
@@ -292,9 +294,11 @@ class PredSession(PylinkEyetrackerSession):
             sf=8, 
             ori=45, 
             ecc=self.settings["stimuli"].get("distance_from_center"), 
+            roll_dist=self.roll_dist,
             angle=45,
             phase=0, 
             contrast=1,
+            temporal_freq=self.settings['stimuli'].get('fixdot_temporal_freq'),
             units="deg")
         
         for _, (angle, ori) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180]))):
@@ -305,9 +309,11 @@ class PredSession(PylinkEyetrackerSession):
                 sf=8, 
                 ori=ori, 
                 ecc=self.settings["stimuli"].get("distance_from_center"), 
+                roll_dist=self.roll_dist,
                 angle=angle,
                 phase=0, 
                 contrast=1,
+                temporal_freq=self.settings['stimuli'].get('fixdot_temporal_freq'),
                 units="deg")
             self.checkerboards[(angle, ori)].draw()
 
@@ -534,12 +540,14 @@ class PredSession(PylinkEyetrackerSession):
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
+            pos=[0, self.roll_dist],
             **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
         )
 
         self.fixation_dot = FixationCue(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("cue_size_deg"),
+            pos=[0, self.roll_dist],
             color=-1,
             cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),
             **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
@@ -557,6 +565,7 @@ class PredSession(PylinkEyetrackerSession):
                 self.settings["various"].get("text_position_x"),
                 self.settings["various"].get("text_position_y"),
             ],
+            units="deg",
             font="Arial",
             alignText="center",
             anchorHoriz="center",
@@ -580,12 +589,26 @@ class PredSession(PylinkEyetrackerSession):
                     yml_random = yaml.safe_load(ymlseqfile)
                 except yaml.YAMLError as exc:
                     print(exc)
-            self.HPL_1 = yml_random.get("design").get("HPL_1")
-            self.HPL_2 = yml_random.get("design").get("HPL_2")
+            self.data_yml_log = yml_random
+            if yml_random.get("design") is not None:
+                self.HPL_1 = yml_random.get("design").get("HPL_1")
+                self.HPL_2 = yml_random.get("design").get("HPL_2")
+                create_new_HPL = False
+            else:
+                create_new_HPL = True
+            if yml_random.get("window") is not None:
+                get_roll_dist = True
+            else:
+                get_roll_dist = False
 
-        # if there is no sequence log file, create the HPLs from scratch
         else:
-            location_pool = set(self.angles_gabors)
+            create_new_HPL = True
+            get_roll_dist = False
+        
+        
+        # if there is no HPL log file, create the HPLs from scratch
+        if create_new_HPL:
+            location_pool = set([int(i) for i in np.linspace(45, 360+45, 4, endpoint=False)]%np.array([360]))
             # Only use neutral locations for the first session
             # Biased locations are used in the second session
             self.HPL_1 = rng.sample([*location_pool], 1)[0]
@@ -597,6 +620,15 @@ class PredSession(PylinkEyetrackerSession):
                 "HPL_1": int(self.HPL_1),
                 "HPL_2": int(self.HPL_2),
             }
+        if get_roll_dist:
+            self.roll_dist = yml_random.get("window").get("roll_dist")
+        else:
+            self.roll_dist = 0
+
+        self.data_yml_log["window"] = {
+            "roll_dist": self.roll_dist
+        }
+        print(self.data_yml_log)
 
     def save_yaml_log(self):
         if not os.path.isfile(self.yml_log):
@@ -604,6 +636,191 @@ class PredSession(PylinkEyetrackerSession):
                 yaml.dump(
                     self.data_yml_log, ymlseqfile, default_flow_style=False
                 )
+        else:
+            with open(self.yml_log, "r") as ymlseqfile:
+                try:
+                    yml_random = yaml.safe_load(ymlseqfile)
+                except yaml.YAMLError as exc:
+                    print(exc)
+
+            if ('design' not in yml_random) or ('window' not in yml_random):
+                with open(self.yml_log, "w") as ymlseqfile:
+                    yaml.dump(
+                        self.data_yml_log, ymlseqfile, default_flow_style=False
+                    )
+
+    def run(self):
+        """Runs experiment."""
+        # self.create_trials()  # create them *before* running!
+
+        if self.eyetracker_on:
+            self.calibrate_eyetracker()
+
+        self.start_experiment()
+
+        if self.eyetracker_on:
+            self.start_recording_eyetracker()
+        for trial in self.trials:
+            trial.run()
+
+        self.close()
+
+    def close(self):
+        """Closes the experiment."""
+        super().close()  # close parent class!
+
+
+class RollDownTheWindowSession(PylinkEyetrackerSession):
+    def __init__(
+        self,
+        output_str,
+        output_dir,
+        subject,
+        task,
+        settings_file,
+        eyetracker_on=True,
+    ):
+        """Initializes StroopSession object.
+
+        Parameters
+        ----------
+        output_str : str
+            Basename for all output-files (like logs), e.g., "sub-01_task-stroop_ses-1"
+        output_dir : str
+            Path to desired output-directory (default: None, which results in $pwd/logs)
+        settings_file : str
+            Path to yaml-file with settings (default: None, which results in the package's
+            default settings file (in data/default_settings.yml)
+        """
+        super().__init__(
+            output_str,
+            output_dir=output_dir,
+            settings_file=settings_file,
+            eyetracker_on=eyetracker_on,
+        )  # initialize parent class!
+
+        self.subject = subject
+        self.task = task
+        self.data_yml_log = {}
+
+        # Create log folder if it does not exist
+        if not os.path.isdir(self.output_dir):
+            os.makedirs(self.output_dir)
+
+        # set realtime mode for higher timing precision
+        pylink.beginRealTimeMode(100)
+
+        self._create_yaml_log()
+        self._create_stimuli()
+        self.create_trials()
+        self.save_yaml_log()
+
+        print("--------------------------------")
+        print(
+            "    /\\_/\\           ___\n   = o_o =_______    \\ \\ \n    __^      __(  \.__) )\n(@)<_____>__(_____)____/"
+        )
+        print("Author: @Ningkai Wang")
+        print("--------------------------------")
+
+    def _create_stimuli(self):
+        self.fixation_w = FixationBullsEye(
+            win=self.win,
+            circle_radius=self.settings["stimuli"].get("distance_from_center"),
+            color=(0.5, 0.5, 0.5, 1),
+            pos=[0, self.roll_dist],
+            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+        )
+
+        self.fixation_dot = FixationCue(
+            win=self.win,
+            circle_radius=self.settings["stimuli"].get("cue_size_deg"),
+            pos=[0, self.roll_dist],
+            color=-1,
+            cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+        )
+    def create_trials(self):
+        self.trial_counter = 0
+        self.trials = []
+        self.trials.append(
+                RollDownTheWindowTrial(
+                    session=self,
+                    trial_nr=self.trial_counter,
+                    phase_durations=[np.inf],
+                    keys=self.settings['various'].get('buttons_test'),
+                    draw_each_frame=False,
+                )
+            )
+        self.trial_counter += 1
+        pass
+
+    def _create_yaml_log(self):
+        # every n block, use the new sequences and the new stimuli
+        
+        self.yml_log = os.path.join(
+            self.output_dir,
+            f"sub-{str(self.subject).zfill(2)}_log.yml",
+        )
+
+        # determine if there is a log file. If so, load it.
+        if os.path.isfile(self.yml_log):
+            with open(self.yml_log, "r") as ymlseqfile:
+                try:
+                    yml_random = yaml.safe_load(ymlseqfile)
+                except yaml.YAMLError as exc:
+                    print(exc)
+            print(yml_random)
+            self.data_yml_log = yml_random
+            if yml_random.get("window") is None:
+                create_new_roll_dist = True
+            else:
+                self.roll_dist = yml_random.get("window").get("roll_dist")
+                if self.roll_dist is None:
+                    create_new_roll_dist = True
+                else:
+                    create_new_roll_dist = False
+        else:
+            create_new_roll_dist = True
+
+        if create_new_roll_dist:
+            self.roll_dist = 0
+            self.data_yml_log["window"] = {
+                "roll_dist": self.roll_dist,
+            }
+            
+    def save_yaml_log(self):
+        print(self.yml_log)
+        print('running save_yaml_log')
+        if not os.path.isfile(self.yml_log):
+            print('no yml log file')
+            with open(self.yml_log, "w") as ymlseqfile:
+                yaml.dump(
+                    self.data_yml_log, ymlseqfile, default_flow_style=False
+                )
+        else:
+            with open(self.yml_log, "r") as ymlseqfile:
+                try:
+                    yml_random = yaml.safe_load(ymlseqfile)
+                except yaml.YAMLError as exc:
+                    print(exc)
+
+            if 'window' not in yml_random:
+                print('window not in ymlseqfile')
+                print(self.data_yml_log)
+                with open(self.yml_log, "w") as ymlseqfile:
+                    yaml.dump(
+                        self.data_yml_log, ymlseqfile, default_flow_style=False
+                    )
+            elif yml_random.get("window").get("roll_dist")!=self.roll_dist:
+                print('roll_dist changed')
+                with open(self.yml_log, "w") as ymlseqfile:
+                    yaml.dump(
+                        self.data_yml_log, ymlseqfile, default_flow_style=False
+                    )
+            else:
+                print('roll_dist not changed')
+                pass
+
 
     def run(self):
         """Runs experiment."""

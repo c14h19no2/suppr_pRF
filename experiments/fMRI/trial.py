@@ -117,7 +117,7 @@ class TaskTrial(Trial):
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.corr_key = corr_key
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
     def draw(self):
@@ -231,7 +231,7 @@ class PingTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
 
     def draw(self):
@@ -326,7 +326,7 @@ class SuckerTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_flickering_rate'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
     def draw(self):
@@ -379,7 +379,7 @@ class InstructionTrial(Trial):
         txt_height = self.session.settings['various'].get('text_height')
         txt_width = self.session.settings['various'].get('text_width')
         text_position_x = self.session.settings['various'].get('text_position_x')
-        text_position_y = self.session.settings['various'].get('text_position_y')
+        text_position_y = self.session.settings['various'].get('text_position_y') + self.session.roll_dist
 
         if txt is None:
             txt = '''Press any button to continue.'''
@@ -387,6 +387,7 @@ class InstructionTrial(Trial):
         self.text = TextStim(self.session.win, txt,
                              height=txt_height, 
                              wrapWidth=txt_width, 
+                             units='deg',
                              pos=[text_position_x, text_position_y],
                              font='Arial',
                              alignText = 'center',
@@ -474,10 +475,11 @@ class FeedbackTrial(Trial):
 
     def draw(self):
         self.session.fixation_w.draw()
+        self.session.fixation_dot.draw()
         txt_height = self.session.settings['various'].get('text_height')
         txt_width = self.session.settings['various'].get('text_width')
         text_position_x = self.session.settings['various'].get('text_position_x')
-        text_position_y = self.session.settings['various'].get('text_position_y')
+        text_position_y = self.session.settings['various'].get('text_position_y') + self.session.roll_dist
 
         ACC = np.mean(self.session.resp_task) * 100
 
@@ -490,6 +492,7 @@ class FeedbackTrial(Trial):
         self.text_0 = TextStim(self.session.win, txt_0,
                              height=txt_height, 
                              wrapWidth=txt_width, 
+                             units='deg',
                              pos=[text_position_x, text_position_y],
                              font='Arial',
                              alignText = 'center',
@@ -498,7 +501,8 @@ class FeedbackTrial(Trial):
         self.text_1 = TextStim(self.session.win, txt_1,
                              height=txt_height, 
                              wrapWidth=txt_width, 
-                             pos=[text_position_x, -text_position_y],
+                             pos=[text_position_x, text_position_y - 1],
+                             units='deg',
                              font='Arial',
                              alignText = 'center',
                              anchorHoriz = 'center',
@@ -520,3 +524,35 @@ class FeedbackTrial(Trial):
             for key, t in events:
                 if key in self.keys:
                     self.stop_phase()
+
+class RollDownTheWindowTrial(Trial):
+    def __init__(self, session, trial_nr, phase_durations=[np.inf], keys=None,
+                 draw_each_frame=False, **kwargs):
+
+        super().__init__(session, trial_nr, phase_durations, draw_each_frame=draw_each_frame, **kwargs)
+        self.keys = keys
+
+    def draw(self):
+        self.session.fixation_w.draw()
+        self.session.fixation_dot.draw()
+        self.session.win.flip()
+
+    def get_events(self):
+        events = Trial.get_events(self)
+        if events:
+            for key, t in events:
+                if key == self.keys[0]:
+                    self.session.roll_dist += 0.05
+                elif key == self.keys[1]:
+                    self.session.roll_dist -= 0.05
+                self.session.fixation_w.circle1.pos = (0, self.session.roll_dist)
+                self.session.fixation_w.circle2.pos = (0, self.session.roll_dist)
+                self.session.fixation_dot.outer_circle.pos = (0, self.session.roll_dist)
+                self.session.fixation_dot.inner_circle.pos = (0, self.session.roll_dist)
+                self.session.fixation_dot.line1.start = (-self.session.fixation_dot.circle_radius + self.session.fixation_dot.pos[0], self.session.roll_dist)
+                self.session.fixation_dot.line1.end = (self.session.fixation_dot.circle_radius + self.session.fixation_dot.pos[0], self.session.roll_dist)
+                self.session.fixation_dot.line2.start = (0, -self.session.fixation_dot.circle_radius + self.session.roll_dist)
+                self.session.fixation_dot.line2.end = (0, self.session.fixation_dot.circle_radius + self.session.roll_dist)
+                self.session.data_yml_log["window"] = {"roll_dist": self.session.roll_dist,}
+                self.session.win.flip()
+                self.session.save_yaml_log()

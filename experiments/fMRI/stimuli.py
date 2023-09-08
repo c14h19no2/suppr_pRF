@@ -15,6 +15,7 @@ class FixationBullsEye(object):
         self.circle1 = Circle(
             win,
             units="deg",
+            pos=pos,
             radius=circle_radius * 0.65,
             edges=edges,
             fillColor=None,
@@ -25,6 +26,7 @@ class FixationBullsEye(object):
         self.circle2 = Circle(
             win,
             units="deg",
+            pos=pos,
             radius=circle_radius * 1.35,
             edges=edges,
             fillColor=None,
@@ -48,6 +50,8 @@ class FixationCue(object):
         self, win, circle_radius, color, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
     ):
         self.color = color
+        self.circle_radius = circle_radius
+        self.pos = pos
         self.outer_circle = Circle(
             win,
             units="deg",
@@ -62,8 +66,8 @@ class FixationCue(object):
         self.line1 = Line(
             win,
             units="deg",
-            start=(-circle_radius + pos[0], 0),
-            end=(circle_radius + pos[0], 0),
+            start=(-circle_radius + pos[0], pos[1]),
+            end=(circle_radius + pos[0], pos[1]),
             lineColor=[0, 0, 0],
             lineWidth=cross_lindwidth,
         )
@@ -77,8 +81,8 @@ class FixationCue(object):
         )
         self.inner_circle = Circle(
             win,
-            units="pix",
-            radius=cross_lindwidth * 0.5,
+            units="deg",
+            radius=circle_radius * 0.2,
             pos=pos,
             edges=edges,
             fillColor=self.color,
@@ -136,7 +140,7 @@ class Gabors(object):
     #     self, win, tex, mask, *args, **kwargs
     # ):
     def __init__(
-        self, win, size, sf, ori, ecc=100, angle=0, phase=0, contrast=1, units="deg", *args, **kwargs
+        self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, phase=0, contrast=1, units="deg", *args, **kwargs
     ):
         self.gabor = GratingStim(
             win,
@@ -145,7 +149,7 @@ class Gabors(object):
             size=size,
             sf=sf,
             ori=ori,
-            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))]),
+            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))]) + np.array([0, roll_dist]),
             phase=phase,
             contrast=contrast,
             units=units,
@@ -161,7 +165,7 @@ class Checkerboards(object):
     #     self, win, tex, mask, *args, **kwargs
     # ):
     def __init__(
-        self, win, size, sf, ori, ecc=100, angle=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
+        self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
     ):
         self.temporal_freq = temporal_freq
         self.checkerboards = GratingStim(
@@ -171,7 +175,7 @@ class Checkerboards(object):
             size=size,
             sf=sf,
             ori=ori,
-            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))]),
+            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])+ np.array([0, roll_dist]),
             phase=phase,
             contrast=contrast,
             units=units,
