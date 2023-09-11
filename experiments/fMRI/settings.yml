@@ -51,7 +51,7 @@ stimuli:
 
 design:
   mri_scan: True
-  start_duration: 1.0
+  start_duration: 1.6
   fixation_flicker_time: 0.4
   stim_disp_time: 0.2
   ITI_time: 3 # also waiting for t

@@ -355,7 +355,9 @@ class PredSession(PylinkEyetrackerSession):
             draw_each_frame=False,
         )
         self.trials = [instruction_trial, dummy_trial]
-        self.trial_counter = 2
+        # self.trials = [dummy_trial]
+        self.nr_instruction_trials = len(self.trials)
+        self.trial_counter = len(self.trials)
 
         ## Create test trial
         # parameters  = {}
@@ -393,9 +395,16 @@ class PredSession(PylinkEyetrackerSession):
                                'ind_TaskTrial': ind_TaskTrial,}
 
                 if self.ses_nr == 'test':
+                    if self.settings['design'].get('mri_scan'):
+                        if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                            last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                        else:
+                            last_phase_duration = np.inf
+                    else:
+                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
-                                    self.settings['stimuli'].get('ITI_time')]
+                                    last_phase_duration]
                     phase_names = ['fixation', 'stimulus', 'ITI']
 
                     # setup keys
@@ -465,9 +474,17 @@ class PredSession(PylinkEyetrackerSession):
                                     self.settings['stimuli'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime')]
                 elif self.ses_nr == 'test':
+                    if self.settings['design'].get('mri_scan'):
+                        if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                            last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                        else:
+                            last_phase_duration = np.inf
+                    else:
+                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                    
                     phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                     self.settings['stimuli'].get('stim_refresh_time'), 
-                                    self.settings['stimuli'].get('ITI_time')]
+                                    last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
                         PingTrial(
@@ -486,9 +503,17 @@ class PredSession(PylinkEyetrackerSession):
             # Resting trials
             elif trial_type == 'RestingTrial':
                 parameters = {'trial_type': 'RestingTrial',}
+                if self.settings['design'].get('mri_scan'):
+                    if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                    else:
+                        last_phase_duration = np.inf
+                else:
+                    last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                
                 phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                    self.settings['stimuli'].get('stim_refresh_time'),
-                                   self.settings['stimuli'].get('ITI_time')]
+                                   last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
                         RestingTrial(
@@ -506,9 +531,17 @@ class PredSession(PylinkEyetrackerSession):
             # Sucker trials
             elif trial_type == 'SuckerTrial':
                 parameters = {'trial_type': 'SuckerTrial',}
+                if self.settings['design'].get('mri_scan'):
+                    if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                    else:
+                        last_phase_duration = np.inf
+                else:
+                    last_phase_duration = self.settings['stimuli'].get('ITI_time')
+
                 phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
                                    self.settings['stimuli'].get('stim_refresh_time'), 
-                                   self.settings['stimuli'].get('ITI_time')]
+                                   last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
                         SuckerTrial(

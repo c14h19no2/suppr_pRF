@@ -153,14 +153,21 @@ class TaskTrial(Trial):
     def get_events(self):
         events = super().get_events()
 
-        if self.phase == 2 or self.phase == 1:
-            if self.keys is None:
-                if events:
-                    pass
-            else:
+        # if self.phase == 2 or self.phase == 1:
+        #     if self.keys is None:
+        #         if events:
+        #             pass
+        #     else:
+        #         for key, t in events:
+        #             if key in self.keys:
+        #                 pass
+        
+        if self.phase == 2:
+            if events is not None:
                 for key, t in events:
-                    if key in self.keys:
-                        pass
+                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                        if key == self.session.mri_trigger:
+                            self.stop_phase()
 
     def run(self):
         super().run()
@@ -276,13 +283,19 @@ class PingTrial(Trial):
                             self.session.resp_ping = np.append(self.session.resp_ping, 0)
                             # self.stop_phase()
             elif self.session.ses_nr == 'test':
-                if self.keys is None:
-                    if events:
-                        pass
-                else:
-                    for key, t in events:
-                        if key in self.keys:
-                            pass
+                # if self.keys is None:
+                #     if events:
+                #         pass
+                # else:
+                #     for key, t in events:
+                #         if key in self.keys:
+                #             pass
+                if self.phase == 2:
+                    if events is not None:
+                        for key, t in events:
+                            if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                                if key == self.session.mri_trigger:
+                                    self.stop_phase()
 
     def run(self):
         super().run()
@@ -313,6 +326,16 @@ class RestingTrial(Trial):
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
             self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+
+        if self.phase == 2:
+            if events is not None:
+                for key, t in events:
+                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                        if key == self.session.mri_trigger:
+                            self.stop_phase()
 
     def run(self):
         super().run()
@@ -360,10 +383,17 @@ class SuckerTrial(Trial):
     def get_events(self):
         events = super().get_events()
 
-        if self.keys is None:
-            pass
-        else:
-            pass
+        # if self.keys is None:
+        #     pass
+        # else:
+        #     pass
+        
+        if self.phase == 2 or self.phase == 1:
+            if events is not None:
+                for key, t in events:
+                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                        if key == self.session.mri_trigger:
+                            self.stop_phase()
 
     def run(self):
         super().run()
