@@ -561,7 +561,7 @@ class PredSession(PylinkEyetrackerSession):
             
             self.trial_counter += 1
 
-        self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter))
+        self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter, keys=['space']))
 
     def _create_locations(self):
         self.angles_gabors = [int(i) for i in np.linspace(45, 360+45, 4, endpoint=False)]%np.array([360])
