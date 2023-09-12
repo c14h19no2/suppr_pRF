@@ -49,7 +49,7 @@ design:
   fixation_refresh_time: 0.4
   stim_refresh_time: 0.4
   resp_overtime: 1 # counted as incorrect if overtime in training period
-  ITI_time: 3 # also waiting for t
+  ITI_time: 2.8 # also waiting for t
   feedback_time: 0.2
 
 various:
