@@ -1,22 +1,22 @@
 monitor:
-  # Spinoza 7T
+  # Spinoza_7T
   #     width: 70.9
   #     distance: 196
   #     gamma: 2.1 # grey: 2.060, red: 2.114, green: 2.189, blue: 2.329
-  # psychophysics lab
+  # psychophysics_lab
   #     width: 70.9
   #     distance: 198
   #     gamma: grey: 2.231, red: 2.324, green: 2.295, blue: 2.312
-  # BB lab
+  # BB_lab
   #     width: 52.6
   #     distance: 75
-  # Personal laptop
+  # Personal_laptop
   #     width: 30
   #     distance: 35
   name: psychophysics_lab
   width: 70.9  # width of monitor (in cm)
   distance: 198  # distance of participant from monitor (in cm)
-  gamma: 1  # specific value for gamma correction
+  # gamma: 2.3  # specific value for gamma correction
   verbose: False # set this parameter to False when you're running your experiment for real
 
 window:
@@ -31,31 +31,26 @@ eyetracker:
     calibration_type: HV9
 
 stimuli:
+  refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   instruction_text: 'Please keep looking at the center of screen \n during the experiment, it is important!'
   pretrigger_text: 'Press "t" to start the experiment'
   inner_fix_linewidth: 4
   outer_fix_linewidth: 1
   fixation_cross_lindwidth: 4
-  cue_size_pixels: 5 # calibre of fixation dot
-  cue_size_deg: 0.15 # 1.5 deg?
+  fixation_size_deg: 0.15 # 1.5 deg?
+  fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
-  refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
-  fixdot_refresh_time: 0.4
-  fixdot_temporal_freq: 15 # hz
   ping_temporal_freq: 8 # hz
-  stim_refresh_time: 0.4
-  ITI_time: 2.4
-  feedback_time: 0.2
-  nr_images_per_category: 45 # max 65
   distance_from_center: 2 # degree
 
 design:
   mri_scan: True
   start_duration: 1.6
-  fixation_flicker_time: 0.4
-  stim_disp_time: 0.2
-  ITI_time: 3 # also waiting for t
+  fixation_refresh_time: 0.4
+  stim_refresh_time: 0.4
   resp_overtime: 1 # counted as incorrect if overtime in training period
+  ITI_time: 3 # also waiting for t
+  feedback_time: 0.2
 
 various:
   text_width: 14

@@ -298,7 +298,7 @@ class PredSession(PylinkEyetrackerSession):
             angle=45,
             phase=0, 
             contrast=1,
-            temporal_freq=self.settings['stimuli'].get('fixdot_temporal_freq'),
+            temporal_freq=self.settings['stimuli'].get('fixation_temporal_freq'),
             units="deg")
         
         for _, (angle, ori) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180]))):
@@ -313,7 +313,7 @@ class PredSession(PylinkEyetrackerSession):
                 angle=angle,
                 phase=0, 
                 contrast=1,
-                temporal_freq=self.settings['stimuli'].get('fixdot_temporal_freq'),
+                temporal_freq=self.settings['stimuli'].get('fixation_temporal_freq'),
                 units="deg")
             self.checkerboards[(angle, ori)].draw()
 
@@ -397,13 +397,13 @@ class PredSession(PylinkEyetrackerSession):
                 if self.ses_nr == 'test':
                     if self.settings['design'].get('mri_scan'):
                         if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
-                            last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                            last_phase_duration = self.settings['design'].get('ITI_time')
                         else:
                             last_phase_duration = np.inf
                     else:
-                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
-                    phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                    self.settings['stimuli'].get('stim_refresh_time'), 
+                        last_phase_duration = self.settings['design'].get('ITI_time')
+                    phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                    self.settings['design'].get('stim_refresh_time'), 
                                     last_phase_duration]
                     phase_names = ['fixation', 'stimulus', 'ITI']
 
@@ -432,10 +432,10 @@ class PredSession(PylinkEyetrackerSession):
                             )
                         )
                 elif self.ses_nr in ['practice', 'train']:
-                    phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                    self.settings['stimuli'].get('stim_refresh_time'), 
+                    phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                    self.settings['design'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime'),
-                                    self.settings['stimuli'].get('feedback_time')]
+                                    self.settings['design'].get('feedback_time')]
                     phase_names = ['fixation', 'stimulus', 'resp_overtime', 'feedback']
 
                     # setup keys
@@ -470,20 +470,20 @@ class PredSession(PylinkEyetrackerSession):
                                'ori_Ping':self.oris_pings[ind_PingTrial],}
                 keys = None
                 if self.ses_nr == 'train':
-                    phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                    self.settings['stimuli'].get('stim_refresh_time'), 
+                    phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                    self.settings['design'].get('stim_refresh_time'), 
                                     self.settings['design'].get('resp_overtime')]
                 elif self.ses_nr == 'test':
                     if self.settings['design'].get('mri_scan'):
                         if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
-                            last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                            last_phase_duration = self.settings['design'].get('ITI_time')
                         else:
                             last_phase_duration = np.inf
                     else:
-                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                        last_phase_duration = self.settings['design'].get('ITI_time')
                     
-                    phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                    self.settings['stimuli'].get('stim_refresh_time'), 
+                    phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                    self.settings['design'].get('stim_refresh_time'), 
                                     last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
@@ -505,14 +505,14 @@ class PredSession(PylinkEyetrackerSession):
                 parameters = {'trial_type': 'RestingTrial',}
                 if self.settings['design'].get('mri_scan'):
                     if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
-                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                        last_phase_duration = self.settings['design'].get('ITI_time')
                     else:
                         last_phase_duration = np.inf
                 else:
-                    last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                    last_phase_duration = self.settings['design'].get('ITI_time')
                 
-                phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                   self.settings['stimuli'].get('stim_refresh_time'),
+                phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                   self.settings['design'].get('stim_refresh_time'),
                                    last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
@@ -533,14 +533,14 @@ class PredSession(PylinkEyetrackerSession):
                 parameters = {'trial_type': 'SuckerTrial',}
                 if self.settings['design'].get('mri_scan'):
                     if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
-                        last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                        last_phase_duration = self.settings['design'].get('ITI_time')
                     else:
                         last_phase_duration = np.inf
                 else:
-                    last_phase_duration = self.settings['stimuli'].get('ITI_time')
+                    last_phase_duration = self.settings['design'].get('ITI_time')
 
-                phase_durations = [self.settings['stimuli'].get('fixdot_refresh_time'), 
-                                   self.settings['stimuli'].get('stim_refresh_time'), 
+                phase_durations = [self.settings['design'].get('fixation_refresh_time'), 
+                                   self.settings['design'].get('stim_refresh_time'), 
                                    last_phase_duration]
                 phase_names = ['fixation', 'stimulus', 'ITI']
                 self.trials.append(
@@ -579,7 +579,7 @@ class PredSession(PylinkEyetrackerSession):
 
         self.fixation_dot = FixationCue(
             win=self.win,
-            circle_radius=self.settings["stimuli"].get("cue_size_deg"),
+            circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
             color=-1,
             cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),
@@ -766,7 +766,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
 
         self.fixation_dot = FixationCue(
             win=self.win,
-            circle_radius=self.settings["stimuli"].get("cue_size_deg"),
+            circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
             color=-1,
             cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),

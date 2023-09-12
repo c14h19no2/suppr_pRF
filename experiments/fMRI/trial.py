@@ -117,7 +117,7 @@ class TaskTrial(Trial):
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.corr_key = corr_key
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
     def draw(self):
@@ -238,7 +238,7 @@ class PingTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
 
     def draw(self):
@@ -349,7 +349,7 @@ class SuckerTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
         self.keys = keys
-        self.freq = round((1/self.session.settings['stimuli'].get('fixdot_temporal_freq'))*1/
+        self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
     def draw(self):
