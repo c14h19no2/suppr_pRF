@@ -34,9 +34,9 @@ stimuli:
   refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   instruction_text: 'Please keep looking at the center of screen \n during the experiment, it is important!'
   pretrigger_text: 'Press "t" to start the experiment'
-  outer_fix_linewidth: 0.06
-  fixation_cross_lindwidth: 0.06
-  fixation_size_deg: 0.25
+  outer_fix_linewidth: 0.03
+  fixation_cross_lindwidth: 0.1
+  fixation_size_deg: 0.35
   fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
   ping_temporal_freq: 8 # hz
