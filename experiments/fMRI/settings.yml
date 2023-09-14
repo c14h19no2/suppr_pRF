@@ -11,6 +11,7 @@ monitor:
   #     width: 52.6
   #     distance: 75
   # Personal_laptop
+  #     size: [3072, 1920]
   #     width: 30
   #     distance: 35
   name: BB_lab
