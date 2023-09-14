@@ -13,9 +13,9 @@ monitor:
   # Personal_laptop
   #     width: 30
   #     distance: 35
-  name: psychophysics_lab
-  width: 70.9  # width of monitor (in cm)
-  distance: 198  # distance of participant from monitor (in cm)
+  name: BB_lab
+  width: 52.6  # width of monitor (in cm)
+  distance: 75  # distance of participant from monitor (in cm)
   # gamma: 2.3  # specific value for gamma correction
   verbose: False # set this parameter to False when you're running your experiment for real
 
@@ -34,10 +34,9 @@ stimuli:
   refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   instruction_text: 'Please keep looking at the center of screen \n during the experiment, it is important!'
   pretrigger_text: 'Press "t" to start the experiment'
-  inner_fix_linewidth: 4
-  outer_fix_linewidth: 1
-  fixation_cross_lindwidth: 4
-  fixation_size_deg: 0.15 # 1.5 deg?
+  outer_fix_linewidth: 0.06
+  fixation_cross_lindwidth: 0.06
+  fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
   ping_temporal_freq: 8 # hz

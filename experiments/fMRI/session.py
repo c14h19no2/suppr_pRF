@@ -20,6 +20,7 @@ import scipy.stats as ss
 from scipy.stats import expon
 from psychopy.visual import GratingStim, TextStim, Circle
 from psychopy.core import getTime
+from psychopy.tools import monitorunittools
 from exptools2.core import Session, PylinkEyetrackerSession
 from stimuli import FixationBullsEye, FixationCue, Gabors, Checkerboards
 from trial import (
@@ -574,7 +575,8 @@ class PredSession(PylinkEyetrackerSession):
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
             pos=[0, self.roll_dist],
-            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+            **{"lineWidth": monitorunittools.deg2pix(self.settings["stimuli"].get("outer_fix_linewidth"),
+                                                     self.win.monitor)},
         )
 
         self.fixation_dot = FixationCue(
@@ -582,8 +584,8 @@ class PredSession(PylinkEyetrackerSession):
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
             color=-1,
-            cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),
-            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+                                                     self.win.monitor),
         )
 
         self.fixation_dot.draw()
@@ -744,7 +746,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
         pylink.beginRealTimeMode(100)
 
         self._create_yaml_log()
-        self._create_stimuli()
+        self._create_fixation()
         self.create_trials()
         self.save_yaml_log()
 
@@ -755,13 +757,14 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
         print("Author: @Ningkai Wang")
         print("--------------------------------")
 
-    def _create_stimuli(self):
+    def _create_fixation(self):
         self.fixation_w = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
             pos=[0, self.roll_dist],
-            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+            **{"lineWidth": monitorunittools.deg2pix(self.settings["stimuli"].get("outer_fix_linewidth"),
+                                                     self.win.monitor)},
         )
 
         self.fixation_dot = FixationCue(
@@ -769,9 +772,10 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
             color=-1,
-            cross_lindwidth=self.settings["stimuli"].get("fixation_cross_lindwidth"),
-            **{"lineWidth": self.settings["stimuli"].get("outer_fix_linewidth")},
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+                                                     self.win.monitor),
         )
+
     def create_trials(self):
         self.trial_counter = 0
         self.trials = []

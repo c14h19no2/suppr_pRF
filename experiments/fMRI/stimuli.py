@@ -3,7 +3,7 @@
 
 import numpy as np
 from psychopy.core import getTime
-from psychopy.visual import Line, Circle, ImageStim, Window, GratingStim, RadialStim, PatchStim
+from psychopy.visual import Line, Circle, GratingStim
 
 
 class FixationBullsEye(object):
