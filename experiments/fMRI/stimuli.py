@@ -98,43 +98,6 @@ class FixationCue(object):
         self.inner_circle.draw()
 
 
-class PlaceHolderCircles(object):
-    def __init__(
-        self,
-        win,
-        circle_radius,
-        color,
-        ecc=100,
-        edges=360,
-        linewidth=0.4,
-        fill=True,
-        *args,
-        **kwargs
-    ):
-        self.color = color
-        if fill:
-            fill_color = "gray"
-        else:
-            fill_color = None
-        self.circles = [
-            Circle(
-                win,
-                radius=circle_radius / 2,
-                pos=ecc * np.array([np.sin(angle), np.cos(angle)]),
-                edges=edges,
-                fillColor=fill_color,
-                lineColor=color,
-                lineWidth=linewidth,
-                units="deg",
-            )
-            for angle in np.pi / 4 + np.linspace(0, 2 * np.pi, 4, endpoint=False)
-        ]
-
-    def draw(self):
-        for c in self.circles:
-            c.draw()
-
-
 class Gabors(object):
     # def __init__(
     #     self, win, tex, mask, *args, **kwargs
@@ -159,6 +122,7 @@ class Gabors(object):
 
     def draw(self):
         self.gabor.draw()
+
 
 class Checkerboards(object):
     # def __init__(

@@ -569,7 +569,6 @@ class PredSession(PylinkEyetrackerSession):
         self.angles_pings = [int(i) for i in np.linspace(45, 360+45, 24, endpoint=False)]%np.array([360])
 
     def _create_fixation(self):
-        self.fixation_cue = {}
         self.fixation_w = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
