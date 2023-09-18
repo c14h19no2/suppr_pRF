@@ -582,7 +582,8 @@ class PredSession(PylinkEyetrackerSession):
             win=self.win,
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
-            color=-1,
+            dotcolor=-1,
+            linecolor=self.settings["window"].get("color"),
             cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
                                                      self.win.monitor),
         )
@@ -770,7 +771,8 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
             win=self.win,
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
-            color=-1,
+            dotcolor=-1,
+            linecolor=self.settings["window"].get("color"),
             cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
                                                      self.win.monitor),
         )

@@ -47,9 +47,10 @@ class FixationBullsEye(object):
 
 class FixationCue(object):
     def __init__(
-        self, win, circle_radius, color, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
+        self, win, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
     ):
-        self.color = color
+        self.dotcolor = dotcolor
+        self.linecolor = linecolor
         self.circle_radius = circle_radius
         self.pos = pos
         self.outer_circle = Circle(
@@ -58,25 +59,25 @@ class FixationCue(object):
             radius=circle_radius * 0.5,
             pos=pos,
             edges=edges,
-            fillColor=self.color,
-            lineColor=self.color,
+            fillColor=self.dotcolor,
+            lineColor=self.dotcolor,
             *args,
             **kwargs
         )
         self.line1 = Line(
             win,
             units="deg",
-            start=(-circle_radius + pos[0], pos[1]),
-            end=(circle_radius + pos[0], pos[1]),
-            lineColor=[0, 0, 0],
+            start=(-circle_radius*0.5 + pos[0], pos[1]),
+            end=(circle_radius*0.5 + pos[0], pos[1]),
+            lineColor=self.linecolor,
             lineWidth=cross_lindwidth,
         )
         self.line2 = Line(
             win,
             units="deg",
-            start=(0, -circle_radius + pos[1]),
-            end=(0, circle_radius + pos[1]),
-            lineColor=[0, 0, 0],
+            start=(0, -circle_radius*0.5 + pos[1]),
+            end=(0, circle_radius*0.5 + pos[1]),
+            lineColor=self.linecolor,
             lineWidth=cross_lindwidth,
         )
         self.inner_circle = Circle(
@@ -85,8 +86,8 @@ class FixationCue(object):
             radius=circle_radius * 0.2,
             pos=pos,
             edges=edges,
-            fillColor=self.color,
-            lineColor=self.color,
+            fillColor=self.dotcolor,
+            lineColor=self.dotcolor,
             *args,
             **kwargs
         )
