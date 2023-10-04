@@ -143,13 +143,12 @@ class TaskTrial_train(TaskTrial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, keys, corr_key, timing, verbose=verbose, draw_each_frame=draw_each_frame)
         self.key = None
-        self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
-                          self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
         
     def draw(self):
         if self.phase == 0:
             self.session.fixbullseye.draw()
             self.session.fixation_dot_flk.draw()
+            self.session.win.flip()
         elif self.phase == 1:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
