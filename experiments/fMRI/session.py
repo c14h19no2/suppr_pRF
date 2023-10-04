@@ -24,6 +24,7 @@ from psychopy.tools import monitorunittools
 from exptools2.core import Session, PylinkEyetrackerSession
 from stimuli import FixationBullsEye, FixationDot, FixationDot_flk, Gabors, Checkerboards
 from trial import (
+    TestTrial,
     TaskTrial_train,
     TaskTrial,
     PingTrial,
@@ -358,7 +359,7 @@ class PredSession(PylinkEyetrackerSession):
         self.nr_instruction_trials = len(self.trials)
         self.trial_counter = len(self.trials)
 
-        ## Create test trial
+        # # Create test trial
         # parameters  = {}
         # phase_durations = [0.4, 20, 2.4]
         # phase_names = ['fixation', 'stimulus', 'ITI']
@@ -595,7 +596,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth")/2,
                                                      self.win.monitor),
         )
 
