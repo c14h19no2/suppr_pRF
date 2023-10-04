@@ -192,8 +192,6 @@ class PingTrial(Trial):
         self.keys = keys
         self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
-        self.session.fixation_dot_flk.inner_circle.opacity = 1
-        self.session.fixation_dot_flk.outer_circle.opacity = 1
 
     def draw(self):
         if self.phase == 0:
@@ -284,8 +282,6 @@ class SuckerTrial(Trial):
             self.session.fixation_dot_flk.draw()
         elif self.phase == 1:
             self.session.fixbullseye.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 2:

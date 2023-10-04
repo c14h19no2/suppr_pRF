@@ -101,7 +101,7 @@ class FixationDot_flk(FixationDot):
     def __init__(
         self, win, freq, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
     ):
-      super().__init__(win, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs)
+      super().__init__(win, circle_radius, dotcolor, linecolor, cross_lindwidth, pos, edges, *args, **kwargs)
       self.freq = freq
       self.inner_circle.opacity = 1.0
       self.outer_circle.opacity = 1.0
