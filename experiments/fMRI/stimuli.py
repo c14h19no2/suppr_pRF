@@ -11,7 +11,6 @@ class FixationBullsEye(object):
         self, win, circle_radius, color, pos=[0, 0], edges=360, *args, **kwargs
     ):
         self.color = color
-        
         self.circle1 = Circle(
             win,
             units="deg",
@@ -45,7 +44,7 @@ class FixationBullsEye(object):
         self.color = color
 
 
-class FixationCue(object):
+class FixationDot(object):
     def __init__(
         self, win, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
     ):
@@ -98,11 +97,28 @@ class FixationCue(object):
         self.line2.draw()
         self.inner_circle.draw()
 
+class FixationDot_flk(FixationDot):
+    def __init__(
+        self, win, freq, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
+    ):
+      super().__init__(win, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs)
+      self.freq = freq
+      self.inner_circle.opacity = 1.0
+      self.outer_circle.opacity = 1.0
+      self.last_time = getTime()
+
+    def draw(self):
+        present_time = getTime()
+        if (present_time - self.last_time) > (1.0/(self.freq * 2)):
+            self.inner_circle.opacity = 1.0 - self.inner_circle.opacity
+            self.outer_circle.opacity = 1.0 - self.outer_circle.opacity
+            self.last_time = present_time
+        self.outer_circle.draw()
+        self.line1.draw()
+        self.line2.draw()
+        self.inner_circle.draw()
 
 class Gabors(object):
-    # def __init__(
-    #     self, win, tex, mask, *args, **kwargs
-    # ):
     def __init__(
         self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, phase=0, contrast=1, units="deg", *args, **kwargs
     ):
@@ -126,9 +142,6 @@ class Gabors(object):
 
 
 class Checkerboards(object):
-    # def __init__(
-    #     self, win, tex, mask, *args, **kwargs
-    # ):
     def __init__(
         self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
     ):

@@ -22,9 +22,8 @@ from psychopy.visual import GratingStim, TextStim, Circle
 from psychopy.core import getTime
 from psychopy.tools import monitorunittools
 from exptools2.core import Session, PylinkEyetrackerSession
-from stimuli import FixationBullsEye, FixationCue, Gabors, Checkerboards
+from stimuli import FixationBullsEye, FixationDot, FixationDot_flk, Gabors, Checkerboards
 from trial import (
-    TestTrial,
     TaskTrial_train,
     TaskTrial,
     PingTrial,
@@ -32,7 +31,6 @@ from trial import (
     SuckerTrial,
     InstructionTrial,
     DummyWaiterTrial,
-    OutroTrial,
     FeedbackTrial,
     RollDownTheWindowTrial,
 )
@@ -569,7 +567,7 @@ class PredSession(PylinkEyetrackerSession):
         self.angles_pings = [int(i) for i in np.linspace(45, 360+45, 24, endpoint=False)]%np.array([360])
 
     def _create_fixation(self):
-        self.fixation_w = FixationBullsEye(
+        self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
@@ -578,7 +576,7 @@ class PredSession(PylinkEyetrackerSession):
                                                      self.win.monitor)},
         )
 
-        self.fixation_dot = FixationCue(
+        self.fixation_dot = FixationDot(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],
@@ -589,6 +587,19 @@ class PredSession(PylinkEyetrackerSession):
         )
 
         self.fixation_dot.draw()
+
+        self.fixation_dot_flk = FixationDot_flk(
+            win=self.win,
+            freq=self.settings['stimuli'].get('fixation_temporal_freq'),
+            circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
+            pos=[0, self.roll_dist],
+            dotcolor=-1,
+            linecolor=self.settings["window"].get("color"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+                                                     self.win.monitor),
+        )
+
+        self.fixation_dot_flk.draw()
 
     def _create_text_loading(self):
         self.text_loading = TextStim(
@@ -758,7 +769,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
         print("--------------------------------")
 
     def _create_fixation(self):
-        self.fixation_w = FixationBullsEye(
+        self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
             color=(0.5, 0.5, 0.5, 1),
@@ -767,7 +778,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
                                                      self.win.monitor)},
         )
 
-        self.fixation_dot = FixationCue(
+        self.fixation_dot = FixationDot(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("fixation_size_deg"),
             pos=[0, self.roll_dist],

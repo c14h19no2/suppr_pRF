@@ -43,20 +43,10 @@ class TestTrial(Trial):
 
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.circle.opacity = 1
-            start_time = getTime()
-            current_frame = 0
-            while getTime() - start_time <= self.phase_durations[0]:
-                self.session.fixation_w.draw()
-                if current_frame % (2*self.freq) < self.freq:
-                    self.session.fixation_dot.circle.opacity = current_frame%2
-                    self.session.fixation_dot.draw()
-                self.session.win.flip()
-                current_frame += 1
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.gabors[(45, 0)].draw()
             self.session.gabors[(135, 45)].draw()
@@ -64,8 +54,7 @@ class TestTrial(Trial):
             self.session.gabors[(315, 45)].draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
 
@@ -122,46 +111,22 @@ class TaskTrial(Trial):
         
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
-            start_time = getTime()
-            current_frame = 0
-            while getTime() - start_time <= self.phase_durations[0]:
-                self.session.fixation_w.draw()
-                if current_frame % (2*self.freq) < self.freq:
-                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
-                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
-                    self.session.fixation_dot.draw()
-                self.session.win.flip()
-                current_frame += 1
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
+            self.session.win.flip()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.gabors[(self.parameters['angle_T'], self.parameters['ori_T'])].draw()
             self.session.gabors[(self.parameters['angle_D'], self.parameters['ori_D'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
 
     def get_events(self):
         events = super().get_events()
-
-        # if self.phase == 2 or self.phase == 1:
-        #     if self.keys is None:
-        #         if events:
-        #             pass
-        #     else:
-        #         for key, t in events:
-        #             if key in self.keys:
-        #                 pass
-        
         if self.phase == 2:
             if events is not None:
                 for key, t in events:
@@ -178,33 +143,21 @@ class TaskTrial_train(TaskTrial):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, keys, corr_key, timing, verbose=verbose, draw_each_frame=draw_each_frame)
         self.key = None
+        self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
+                          self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
+        
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
-            start_time = getTime()
-            current_frame = 0
-            while getTime() - start_time <= self.phase_durations[0]:
-                self.session.fixation_w.draw()
-                if current_frame % (2*self.freq) < self.freq:
-                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
-                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
-                    self.session.fixation_dot.draw()
-                self.session.win.flip()
-                current_frame += 1
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.gabors[(self.parameters['angle_T'], self.parameters['ori_T'])].draw()
             self.session.gabors[(self.parameters['angle_D'], self.parameters['ori_D'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 3:
@@ -214,7 +167,7 @@ class TaskTrial_train(TaskTrial):
             else:
                 self.session.fixation_dot.inner_circle.color = 'red'
                 self.session.resp_task[self.parameters['ind_TaskTrial']] = False
-            self.session.fixation_w.draw()
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
             self.session.fixation_dot.inner_circle.fillColor = -1
@@ -240,33 +193,21 @@ class PingTrial(Trial):
         self.keys = keys
         self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
+        self.session.fixation_dot_flk.inner_circle.opacity = 1
+        self.session.fixation_dot_flk.outer_circle.opacity = 1
 
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
-            start_time = getTime()
-            current_frame = 0
-            while getTime() - start_time <= self.phase_durations[0]:
-                self.session.fixation_w.draw()
-                if current_frame % (2*self.freq) < self.freq:
-                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
-                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
-                    self.session.fixation_dot.draw()
-                self.session.win.flip()
-                current_frame += 1
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
+            self.session.win.flip()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'])].draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
 
@@ -281,15 +222,7 @@ class PingTrial(Trial):
                     for key, t in events:
                         if key in self.keys:
                             self.session.resp_ping = np.append(self.session.resp_ping, 0)
-                            # self.stop_phase()
             elif self.session.ses_nr == 'test':
-                # if self.keys is None:
-                #     if events:
-                #         pass
-                # else:
-                #     for key, t in events:
-                #         if key in self.keys:
-                #             pass
                 if self.phase == 2:
                     if events is not None:
                         for key, t in events:
@@ -309,21 +242,15 @@ class RestingTrial(Trial):
 
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
 
@@ -351,30 +278,19 @@ class SuckerTrial(Trial):
         self.keys = keys
         self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
-        
+
     def draw(self):
         if self.phase == 0:
-            self.session.fixation_w.draw()
-            self.session.fixation_dot.inner_circle.opacity = 1
-            self.session.fixation_dot.outer_circle.opacity = 1
-            start_time = getTime()
-            current_frame = 0
-            while getTime() - start_time <= self.phase_durations[0]:
-                self.session.fixation_w.draw()
-                if current_frame % (2*self.freq) < self.freq:
-                    self.session.fixation_dot.inner_circle.opacity = current_frame%2
-                    self.session.fixation_dot.outer_circle.opacity = current_frame%2
-                    self.session.fixation_dot.draw()
-                self.session.win.flip()
-                current_frame += 1
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
         elif self.phase == 1:
-            self.session.fixation_w.draw()
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.inner_circle.opacity = 1
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 2:
-            self.session.fixation_w.draw()
+            self.session.fixbullseye.draw()
             self.session.fixation_dot.inner_circle.opacity = 1
             self.session.fixation_dot.outer_circle.opacity = 1
             self.session.fixation_dot.draw()
@@ -382,12 +298,6 @@ class SuckerTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-
-        # if self.keys is None:
-        #     pass
-        # else:
-        #     pass
-        
         if self.phase == 2 or self.phase == 1:
             if events is not None:
                 for key, t in events:
@@ -428,7 +338,7 @@ class InstructionTrial(Trial):
         
 
     def draw(self):
-        self.session.fixation_w.draw()
+        self.session.fixbullseye.draw()
         self.session.fixation_dot.draw()
         self.text.draw()
         self.session.win.flip()
@@ -454,7 +364,7 @@ class DummyWaiterTrial(InstructionTrial):
         super().__init__(session, trial_nr, phase_durations, txt, draw_each_frame=draw_each_frame, **kwargs)
     
     def draw(self):
-        self.session.fixation_w.draw()
+        self.session.fixbullseye.draw()
         if self.phase == 0:
             self.text.draw()
             self.session.fixation_dot.draw()
@@ -504,7 +414,7 @@ class FeedbackTrial(Trial):
         self.keys = keys
 
     def draw(self):
-        self.session.fixation_w.draw()
+        self.session.fixbullseye.draw()
         self.session.fixation_dot.draw()
         txt_height = self.session.settings['various'].get('text_height')
         txt_width = self.session.settings['various'].get('text_width')
@@ -563,7 +473,7 @@ class RollDownTheWindowTrial(Trial):
         self.keys = keys
 
     def draw(self):
-        self.session.fixation_w.draw()
+        self.session.fixbullseye.draw()
         self.session.fixation_dot.draw()
         self.session.win.flip()
 
@@ -575,8 +485,8 @@ class RollDownTheWindowTrial(Trial):
                     self.session.roll_dist += 0.05
                 elif key == self.keys[1]:
                     self.session.roll_dist -= 0.05
-                self.session.fixation_w.circle1.pos = (0, self.session.roll_dist)
-                self.session.fixation_w.circle2.pos = (0, self.session.roll_dist)
+                self.session.fixbullseye.circle1.pos = (0, self.session.roll_dist)
+                self.session.fixbullseye.circle2.pos = (0, self.session.roll_dist)
                 self.session.fixation_dot.outer_circle.pos = (0, self.session.roll_dist)
                 self.session.fixation_dot.inner_circle.pos = (0, self.session.roll_dist)
                 self.session.fixation_dot.line1.start = (-self.session.fixation_dot.circle_radius + self.session.fixation_dot.pos[0], self.session.roll_dist)
