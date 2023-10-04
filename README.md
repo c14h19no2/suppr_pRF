@@ -2,15 +2,13 @@
 
 ## About The Project
 
-<https://www.sciencedirect.com/science/article/pii/S0042698912003380>
-
 ## Built With
 
-This experiment is based on exptools2 and psychopy.
+This experiment is based on `exptools2` and `psychopy`.
 
 ## Design
 
-The experiment is consist of 3 learning periods: neutral learning, biased learning 1, biased learnning 2. The participant will see to raised-cosine patches, and need to respond to the orientation of the angled patch, while ignoring a distractor gabor that is vertically or horizontally oriented. Except the Task Trials, we also have Ping Trials, Resting Trials, and Sucker Trials in this experiment.
+The experiment consists of 3 learning periods: neutral learning, biased learning 1, and biased learning 2. The participant will see two raised-cosine patches, and need to respond to the orientation of the angled patch, while ignoring a distractor patch that is vertically or horizontally oriented. Except for the Task Trials, we also have Ping Trials, Resting Trials, and Sucker Trials in this experiment.
 
 ### Full Picture
 
@@ -114,11 +112,15 @@ Time: 400 ms -> 400 ms -> until response for maximum 1000 ms
     ```
 
 3. Adjust the stimuli window:
+
     ```sh
     python roll_down_the_window.py $subject$ $eyetracking$
     ```
+
     This command is used to adjust the location of stimuli on monitor to make sure that participant\'s eyesight is not blocked and can see the full scene of the experiment.
-3. Run the experiment:
+
+4. Run the experiment:
+
     ```sh
     python main.py $subject$ $session$ $task$ $run$ $eyetracking$
     ```
@@ -130,3 +132,8 @@ Parameters:
 - $task$: The current task of the experiment, as a string, can be 'neutral', 'bias1', or 'bias2'; or an int, can be '0', '1', or '2'.
 - $run$: The current run number of the experiment, an integer, such as 1, or 99.
 - $eyetracking$: Switch the eyelink on and off, as an int, can be '0' or '1'.
+
+## Some references
+
+Fixdot used in this design: <https://www.sciencedirect.com/science/article/pii/S0042698912003380>
+
