@@ -91,8 +91,6 @@ class TaskTrial(Trial):
         Dict of parameters that needs to be added to the log of this trial
     keys : array-like
         List/tuple/array with keys that can be pressed
-    corr_key : str
-        The correct key that needs to be pressed
     timing : str
         The "units" of the phase durations. Default is 'seconds', where we
         assume the phase-durations are in seconds. The other option is
@@ -101,10 +99,9 @@ class TaskTrial(Trial):
         Whether to print extra output (mostly timing info)
     """
     def __init__(self, session, trial_nr, phase_durations, phase_names,
-                 parameters, keys, corr_key, timing, verbose=True, draw_each_frame=False):
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
         super().__init__(session, trial_nr, phase_durations, phase_names,
                          parameters, timing, load_next_during_phase=None, verbose=verbose, draw_each_frame=draw_each_frame)
-        self.corr_key = corr_key
         self.keys = keys
         self.freq = round((1/self.session.settings['stimuli'].get('fixation_temporal_freq'))*1/
                           self.session.win.monitorFramePeriod) # set flickering rate for fixation dot
@@ -139,9 +136,9 @@ class TaskTrial(Trial):
 
 class TaskTrial_train(TaskTrial):
     def __init__(self, session, trial_nr, phase_durations, phase_names,
-                 parameters, keys, corr_key, timing, verbose=True, draw_each_frame=False):
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
         super().__init__(session, trial_nr, phase_durations, phase_names,
-                         parameters, keys, corr_key, timing, verbose=verbose, draw_each_frame=draw_each_frame)
+                         parameters, keys, timing, verbose=verbose, draw_each_frame=draw_each_frame)
         self.key = None
         
     def draw(self):
@@ -160,7 +157,7 @@ class TaskTrial_train(TaskTrial):
             self.session.fixation_dot.draw()
             self.session.win.flip()
         elif self.phase == 3:
-            if self.key == self.corr_key:
+            if self.key == self.parameters['corr_key']:
                 self.session.fixation_dot.inner_circle.color = 'chartreuse'
                 self.session.resp_task[self.parameters['ind_TaskTrial']] = True
             else:
@@ -491,3 +488,84 @@ class RollDownTheWindowTrial(Trial):
                 self.session.data_yml_log["window"] = {"roll_dist": self.session.roll_dist,}
                 self.session.win.flip()
                 self.session.save_yaml_log()
+
+class PingpRFTrial(Trial):
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+    
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
+            self.session.win.flip()
+        elif self.phase == 1:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot.draw()
+            self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'], self.parameters['direction'])].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+
+    def get_events(self):
+        events = super().get_events()
+        if self.phase == 2 or self.phase == 1:
+            if events is not None:
+                for key, t in events:
+                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                        if key == self.session.mri_trigger:
+                            self.stop_phase()
+
+    def run(self):
+        super().run()
+
+class PingpRFTrial_train(Trial):
+    def __init__(self, session, trial_nr, phase_durations, phase_names,
+                 parameters, keys, timing, verbose=True, draw_each_frame=False):
+        super().__init__(session, trial_nr, phase_durations, phase_names,
+                         parameters, timing, verbose=verbose, draw_each_frame=draw_each_frame)
+        self.keys = keys
+        self.key = None
+        
+    def draw(self):
+        if self.phase == 0:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot_flk.draw()
+            self.session.win.flip()
+        elif self.phase == 1:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot.draw()
+            self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'], self.parameters['direction'])].draw()
+            self.session.win.flip()
+        elif self.phase == 2:
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+        elif self.phase == 3:
+            if self.key == self.parameters['corr_key']:
+                self.session.fixation_dot.inner_circle.color = 'chartreuse'
+                self.session.resp_task[self.parameters['ind_TaskTrial']] = True
+            else:
+                self.session.fixation_dot.inner_circle.color = 'red'
+                self.session.resp_task[self.parameters['ind_TaskTrial']] = False
+            self.session.fixbullseye.draw()
+            self.session.fixation_dot.draw()
+            self.session.win.flip()
+            self.session.fixation_dot.inner_circle.fillColor = -1
+            self.session.fixation_dot.inner_circle.lineColor = -1
+
+    def get_events(self):
+        events = super().get_events()
+        if self.phase == 2 or self.phase == 1:
+            if self.keys is None:
+                if events:
+                    self.stop_phase()
+            else:
+                for key, t in events:
+                    if key in self.keys:
+                        self.key = key
+                        self.stop_phase()

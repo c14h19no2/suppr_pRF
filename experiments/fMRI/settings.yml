@@ -45,7 +45,7 @@ stimuli:
   distance_from_center: 2 # degree
 
 design:
-  mri_scan: True
+  mri_scan: False
   start_duration: 1.6
   fixation_refresh_time: 0.4
   stim_refresh_time: 0.4
