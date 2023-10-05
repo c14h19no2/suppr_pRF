@@ -146,6 +146,7 @@ class Checkerboards(object):
         self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
     ):
         self.temporal_freq = temporal_freq
+        self.contrast = contrast
         self.checkerboards = GratingStim(
             win,
             tex="sqrXsqr",
@@ -166,6 +167,25 @@ class Checkerboards(object):
         present_time = getTime()
         if (present_time - self.last_time) > (1.0/(self.temporal_freq * 2)):
             self.checkerboards.contrast = -self.checkerboards.contrast
+            self.checkerboards.ori += 45
+            self.last_time = present_time
+        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
+            self.checkerboards.draw()
+
+class CheckerboardsAdjContrast(Checkerboards):
+    def __init__(
+        self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, direction=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
+    ):
+        super().__init__(win, size, sf, ori, ecc, roll_dist, angle, phase, contrast, units, temporal_freq, *args, **kwargs)
+        self.direction = direction
+    
+    def draw(self):
+        present_time = getTime()
+        if (present_time - self.last_time) > 0.1:
+            self.last_time = present_time
+            self.checkerboards.contrast = self.contrast
+        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 2)):
+            self.checkerboards.contrast = self.checkerboards.contrast + (present_time - self.last_time) * self.direction
             self.checkerboards.ori += 45
             self.last_time = present_time
         if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
