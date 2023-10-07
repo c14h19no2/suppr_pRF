@@ -1056,7 +1056,7 @@ class PingSession(PylinkEyetrackerSession):
                 angle=angle,
                 direction=direction,
                 phase=0, 
-                contrast=0.66,
+                contrast=0.5,
                 temporal_freq=self.settings['stimuli'].get('fixation_temporal_freq'),
                 units="deg")
             self.checkerboards[(angle, ori, direction)].draw()
