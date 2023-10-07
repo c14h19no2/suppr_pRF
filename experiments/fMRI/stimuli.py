@@ -43,7 +43,6 @@ class FixationBullsEye(object):
         self.circle2.color = color
         self.color = color
 
-
 class FixationDot(object):
     def __init__(
         self, win, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
@@ -120,7 +119,6 @@ class FixationDot_flk(FixationDot):
             *args,
             **kwargs
         )
-      
       self.last_time = getTime()
 
     def draw(self):
@@ -155,7 +153,6 @@ class Gabors(object):
 
     def draw(self):
         self.gabor.draw()
-
 
 class Checkerboards(object):
     def __init__(
