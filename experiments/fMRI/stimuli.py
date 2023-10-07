@@ -52,10 +52,12 @@ class FixationDot(object):
         self.linecolor = linecolor
         self.circle_radius = circle_radius
         self.pos = pos
+        self.beta_outer_circle = 0.5
+        self.beta_inner_circle = 0.2
         self.outer_circle = Circle(
             win,
             units="deg",
-            radius=circle_radius * 0.5,
+            radius=circle_radius * self.beta_outer_circle,
             pos=pos,
             edges=edges,
             fillColor=self.dotcolor,
@@ -82,7 +84,7 @@ class FixationDot(object):
         self.inner_circle = Circle(
             win,
             units="deg",
-            radius=circle_radius * 0.2,
+            radius=circle_radius * self.beta_inner_circle,
             pos=pos,
             edges=edges,
             fillColor=self.dotcolor,
@@ -105,6 +107,20 @@ class FixationDot_flk(FixationDot):
       self.freq = freq
       self.inner_circle.opacity = 1.0
       self.outer_circle.opacity = 1.0
+      self.beta_inner_circle = 0.1
+
+      self.inner_circle = Circle(
+            win,
+            units="deg",
+            radius=circle_radius * self.beta_inner_circle,
+            pos=pos,
+            edges=edges,
+            fillColor=self.dotcolor,
+            lineColor=self.dotcolor,
+            *args,
+            **kwargs
+        )
+      
       self.last_time = getTime()
 
     def draw(self):
