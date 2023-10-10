@@ -13,7 +13,7 @@ monitor:
   # Personal_laptop
   #     size: [3072, 1920]
   #     width: 30
-  #     distance: 35
+  #     distance: 75
   name: BB_lab
   width: 52.6  # width of monitor (in cm)
   distance: 75  # distance of participant from monitor (in cm)
@@ -24,7 +24,8 @@ window:
   size: [1920, 1080]
   units: pix
   fullscr: True
-  screen: 1
+  screen: 0
+  color: [-0.5, -0.5, -0.5]
 
 eyetracker:
   address: '100.1.1.1'
@@ -38,20 +39,35 @@ stimuli:
   pretrigger_text: 'Press "t" to start the experiment'
   outer_fix_linewidth: 0.05
   fixation_cross_lindwidth: 0.1
-  fixation_size_deg: 0.35
+  fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
+  stim_spatial_freq: 5
   ping_temporal_freq: 8 # hz
   distance_from_center: 2 # degree
+  ping_contrast_lowest: 0.23
+  ping_contrast_highest: 1
+  ping_contrast_adj_rate: 2.31
 
 design:
-  mri_scan: False
-  start_duration: 1.6
+  mri_scan: True
+  start_duration: 14.3
+  end_duration: 14.3
+  train_start_duration: 1.6
   fixation_refresh_time: 0.4
   stim_refresh_time: 0.4
   resp_overtime: 1 # counted as incorrect if overtime in training period
   ITI_time: 2.8 # also waiting for t
   feedback_time: 0.2
+  pingpRF_ping_nr: 144
+  supprpRF_practice_task_nr:
+  supprpRF_train_task_nr: 192
+  supprpRF_testtrain_task_nr: 48
+  supprpRF_testtrain_ping_nr: 48
+  supprpRF_task_nr: 48
+  supprpRF_ping_nr: 48
+  supprpRF_rest_nr: 12
+  supprpRF_sucker_nr: 18
 
 various:
   text_width: 14

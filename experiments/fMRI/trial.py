@@ -127,7 +127,7 @@ class TaskTrial(Trial):
         if self.phase == 2:
             if events is not None:
                 for key, t in events:
-                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                    if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
                         if key == self.session.mri_trigger:
                             self.stop_phase()
 
@@ -220,7 +220,7 @@ class PingTrial(Trial):
                 if self.phase == 2:
                     if events is not None:
                         for key, t in events:
-                            if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                            if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
                                 if key == self.session.mri_trigger:
                                     self.stop_phase()
 
@@ -254,7 +254,7 @@ class RestingTrial(Trial):
         if self.phase == 2:
             if events is not None:
                 for key, t in events:
-                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                    if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
                         if key == self.session.mri_trigger:
                             self.stop_phase()
 
@@ -293,7 +293,7 @@ class SuckerTrial(Trial):
         if self.phase == 2 or self.phase == 1:
             if events is not None:
                 for key, t in events:
-                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                    if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
                         if key == self.session.mri_trigger:
                             self.stop_phase()
 
@@ -346,7 +346,6 @@ class InstructionTrial(Trial):
                 if key in self.keys:
                     self.stop_phase()
 
-
 class DummyWaiterTrial(InstructionTrial):
     """ Simple trial with text (trial x) and fixation. """
 
@@ -379,6 +378,28 @@ class DummyWaiterTrial(InstructionTrial):
                         #####################################################
                         self.session.experiment_start_time = getTime()
 
+class WaitStartTriggerTrial(Trial):
+    def __init__(self, session, trial_nr, phase_durations=[np.inf], draw_each_frame=False,):
+        super().__init__(session, trial_nr, phase_durations, draw_each_frame=draw_each_frame)
+        
+    def draw(self):
+        self.session.fixbullseye.draw()
+        self.session.fixation_dot.draw()
+        self.session.win.flip()
+
+    def get_events(self):
+        events = Trial.get_events(self)
+
+        if events:
+            for key, t in events:
+                if key == self.session.mri_trigger:
+                    self.stop_phase()
+                    self.session.win.flip()
+                    #####################################################
+                    ## TRIGGER HERE
+                    #####################################################
+                    self.session.experiment_start_time = getTime()
+
 class OutroTrial(InstructionTrial):
     """ Simple trial with only fixation cross.  """
 
@@ -394,7 +415,6 @@ class OutroTrial(InstructionTrial):
             for key, _ in events:
                 if key == 'space':
                     self.stop_phase()   
-
 
 class FeedbackTrial(Trial):
     """ Simple trial with feedback text. """
@@ -516,7 +536,7 @@ class PingpRFTrial(Trial):
         if self.phase == 2 or self.phase == 1:
             if events is not None:
                 for key, t in events:
-                    if (self.trial_nr+1+self.session.nr_instruction_trials)%4 == 0:
+                    if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
                         if key == self.session.mri_trigger:
                             self.stop_phase()
 

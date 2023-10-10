@@ -53,6 +53,8 @@ class FixationDot(object):
         self.pos = pos
         self.beta_outer_circle = 0.5
         self.beta_inner_circle = 0.2
+        self.cross_lindwidth = cross_lindwidth
+        
         self.outer_circle = Circle(
             win,
             units="deg",
@@ -67,18 +69,18 @@ class FixationDot(object):
         self.line1 = Line(
             win,
             units="deg",
-            start=(-circle_radius*0.5 + pos[0], pos[1]),
-            end=(circle_radius*0.5 + pos[0], pos[1]),
+            start=(-circle_radius*0.55 + pos[0], pos[1]),
+            end=(circle_radius*0.55 + pos[0], pos[1]),
             lineColor=self.linecolor,
-            lineWidth=cross_lindwidth,
+            lineWidth=self.cross_lindwidth,
         )
         self.line2 = Line(
             win,
             units="deg",
-            start=(0, -circle_radius*0.5 + pos[1]),
-            end=(0, circle_radius*0.5 + pos[1]),
+            start=(0, -circle_radius*0.55 + pos[1]),
+            end=(0, circle_radius*0.55 + pos[1]),
             lineColor=self.linecolor,
-            lineWidth=cross_lindwidth,
+            lineWidth=self.cross_lindwidth,
         )
         self.inner_circle = Circle(
             win,
@@ -102,24 +104,25 @@ class FixationDot_flk(FixationDot):
     def __init__(
         self, win, freq, circle_radius, dotcolor, linecolor, cross_lindwidth=4, pos=[0, 0], edges=360, *args, **kwargs
     ):
-      super().__init__(win, circle_radius, dotcolor, linecolor, cross_lindwidth, pos, edges, *args, **kwargs)
-      self.freq = freq
-      self.inner_circle.opacity = 1.0
-      self.outer_circle.opacity = 1.0
-      self.beta_inner_circle = 0.1
-
-      self.inner_circle = Circle(
-            win,
-            units="deg",
-            radius=circle_radius * self.beta_inner_circle,
-            pos=pos,
-            edges=edges,
-            fillColor=self.dotcolor,
-            lineColor=self.dotcolor,
-            *args,
-            **kwargs
-        )
-      self.last_time = getTime()
+        super().__init__(win, circle_radius, dotcolor, linecolor, cross_lindwidth=cross_lindwidth, pos=pos, edges=edges, *args, **kwargs)
+        self.freq = freq
+        self.inner_circle.opacity = 1.0
+        self.outer_circle.opacity = 1.0
+        # self.beta_inner_circle = 0.1
+        # self.cross_lindwidth = cross_lindwidth/2
+        
+        self.inner_circle = Circle(
+                win,
+                units="deg",
+                radius=circle_radius * self.beta_inner_circle,
+                pos=pos,
+                edges=edges,
+                fillColor=self.dotcolor,
+                lineColor=self.dotcolor,
+                *args,
+                **kwargs
+            )
+        self.last_time = getTime()
 
     def draw(self):
         present_time = getTime()
@@ -187,16 +190,14 @@ class Checkerboards(object):
 
 class CheckerboardsAdjContrast(Checkerboards):
     def __init__(
-        self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, direction=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
+        self, win, size, sf, ori, ecc=100, roll_dist=0, angle=0, direction=0, adj_rate=0, phase=0, contrast=1, units="deg", temporal_freq=8, *args, **kwargs
     ):
         super().__init__(win, size, sf, ori, ecc, roll_dist, angle, phase, contrast, units, temporal_freq, *args, **kwargs)
         self.direction = direction
         if direction == 0:
-            self.beta = 0.5
-        elif direction == 1:
-            self.beta = 1.5
-        elif direction == -1:
-            self.beta = 0.4
+            self.beta = 0
+        elif direction == 1 or direction == -1:
+            self.beta = adj_rate
         else:
             raise ValueError("direction should be 0, 1, or -1")
     
@@ -211,3 +212,5 @@ class CheckerboardsAdjContrast(Checkerboards):
             self.last_time = present_time
         if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
             self.checkerboards.draw()
+        
+        print("Contrast: ", self.checkerboards.contrast)

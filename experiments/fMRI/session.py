@@ -32,6 +32,7 @@ from trial import (
     SuckerTrial,
     InstructionTrial,
     DummyWaiterTrial,
+    WaitStartTriggerTrial,
     FeedbackTrial,
     RollDownTheWindowTrial,
     PingpRFTrial,
@@ -117,44 +118,40 @@ class PredSession(PylinkEyetrackerSession):
 
         # Create sequence of trials
         if self.ses_nr == 'practice':
-            self.nr_task = 48
+            self.nr_task = self.settings['design'].get('supprpRF_practice_task_nr')
             self.nr_ping = 0
             self.nr_rest = 0
             self.nr_sucker = 0
-            self.seq_trials = np.hstack([
-                                        np.tile('TaskTrial', self.nr_task), 
-                                        ])
+
         elif self.ses_nr == 'test':
-            self.nr_task = 48
-            self.nr_ping = 48
-            self.nr_rest = 12
-            self.nr_sucker = 18
-            self.seq_trials = np.hstack([
+            self.nr_task = self.settings['design'].get('supprpRF_task_nr')
+            self.nr_ping = self.settings['design'].get('supprpRF_ping_nr')
+            self.nr_rest = self.settings['design'].get('supprpRF_rest_nr')
+            self.nr_sucker = self.settings['design'].get('supprpRF_sucker_nr')
+            
+        elif self.ses_nr == 'train':
+            if self.run_nr in [0,]:
+                self.nr_task = self.settings['design'].get('supprpRF_train_task_nr')
+                self.nr_ping = 0
+                self.nr_rest = 0
+                self.nr_sucker = 0
+
+            else:
+                self.nr_task = self.settings['design'].get('supprpRF_testtrain_task_nr')
+                self.nr_ping = self.settings['design'].get('supprpRF_testtrain_ping_nr')
+                self.nr_rest = 0
+                self.nr_sucker = 0
+
+        else:
+            raise ValueError("session should be 'practice', 'train', or 'test'")
+        
+        self.seq_trials = np.hstack([
                                         np.tile('TaskTrial', self.nr_task), 
                                         np.tile('PingTrial', self.nr_ping), 
                                         np.tile('RestingTrial', self.nr_rest), 
                                         np.tile('SuckerTrial', self.nr_sucker)
                                         ])
-        elif self.ses_nr == 'train':
-            if self.run_nr in [0,]:
-                self.nr_task = 192
-                self.nr_ping = 0
-                self.nr_rest = 0
-                self.nr_sucker = 0
-                self.seq_trials = np.hstack([
-                                        np.tile('TaskTrial', self.nr_task), 
-                                        ])
-            else:
-                self.nr_task = 48
-                self.nr_ping = 48
-                self.nr_rest = 0
-                self.nr_sucker = 0
-                self.seq_trials = np.hstack([
-                                        np.tile('TaskTrial', 48), 
-                                        np.tile('PingTrial', 48),
-                                        ])
-        else:
-            raise ValueError("session should be 'practice', 'train', or 'test'")
+        
         np.random.shuffle(self.seq_trials)
 
         if self.task == 'neutral':
@@ -264,7 +261,7 @@ class PredSession(PylinkEyetrackerSession):
         self.gabors['test'] = Gabors(
             win=self.win, 
             size=self.settings["stimuli"].get("stim_size_deg"), 
-            sf=8, 
+            sf=self.settings["stimuli"].get("stim_spatial_freq"), 
             ori=45, 
             ecc=self.settings["stimuli"].get("distance_from_center"), 
             roll_dist=self.roll_dist,
@@ -278,7 +275,7 @@ class PredSession(PylinkEyetrackerSession):
             self.gabors[(angle, ori)] = Gabors(
                 win=self.win, 
                 size=self.settings["stimuli"].get("stim_size_deg"), 
-                sf=8, 
+                sf=self.settings["stimuli"].get("stim_spatial_freq"), 
                 ori=ori, 
                 ecc=self.settings["stimuli"].get("distance_from_center"), 
                 roll_dist=self.roll_dist,
@@ -293,7 +290,7 @@ class PredSession(PylinkEyetrackerSession):
         self.checkerboards['test'] = Checkerboards(
             win=self.win,
             size=self.settings["stimuli"].get("stim_size_deg"), 
-            sf=8, 
+            sf=self.settings["stimuli"].get("stim_spatial_freq"), 
             ori=45, 
             ecc=self.settings["stimuli"].get("distance_from_center"), 
             roll_dist=self.roll_dist,
@@ -308,7 +305,7 @@ class PredSession(PylinkEyetrackerSession):
             self.checkerboards[(angle, ori)] = Checkerboards(
                 win=self.win, 
                 size=self.settings["stimuli"].get("stim_size_deg"), 
-                sf=8, 
+                sf=self.settings["stimuli"].get("stim_spatial_freq"), 
                 ori=ori, 
                 ecc=self.settings["stimuli"].get("distance_from_center"), 
                 roll_dist=self.roll_dist,
@@ -348,16 +345,39 @@ class PredSession(PylinkEyetrackerSession):
             keys=["space"],
             draw_each_frame=False,
         )
-
+        
+        if self.ses_nr == 'train':
+            dummy_txt = self.settings["stimuli"].get("pretrigger_text")
+        else:
+            dummy_txt= ''
+            
         dummy_trial = DummyWaiterTrial(
             session=self,
-            trial_nr=1,
+            trial_nr=0,
             phase_durations=[np.inf, self.settings["design"].get("start_duration")],
-            txt=self.settings["stimuli"].get("pretrigger_text"),
+            txt=dummy_txt,
             draw_each_frame=False,
         )
-        self.trials = [instruction_trial, dummy_trial]
-        # self.trials = [dummy_trial]
+
+        start_trial = WaitStartTriggerTrial(
+            session=self,
+            trial_nr=1,
+            phase_durations=[np.inf],
+            draw_each_frame=False,
+        )
+
+        if (not self.settings['design'].get('mri_scan')) or (self.ses_nr == 'train'):
+            self.trials = [instruction_trial]
+            self.trials.append(DummyWaiterTrial(
+                                                session=self,
+                                                trial_nr=1,
+                                                phase_durations=[np.inf, self.settings["design"].get("train_start_duration")],
+                                                txt=dummy_txt,
+                                                draw_each_frame=False,
+                                            ))
+        else:
+            self.trials = [dummy_trial, start_trial]
+
         self.nr_instruction_trials = len(self.trials)
         self.trial_counter = len(self.trials)
 
@@ -398,7 +418,7 @@ class PredSession(PylinkEyetrackerSession):
 
                 if self.ses_nr == 'test':
                     if self.settings['design'].get('mri_scan'):
-                        if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                        if (self.trial_counter+1-self.nr_instruction_trials)%4!=0:
                             last_phase_duration = self.settings['design'].get('ITI_time')
                         else:
                             last_phase_duration = np.inf
@@ -477,7 +497,7 @@ class PredSession(PylinkEyetrackerSession):
                                     self.settings['design'].get('resp_overtime')]
                 elif self.ses_nr == 'test':
                     if self.settings['design'].get('mri_scan'):
-                        if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                        if (self.trial_counter+1-self.nr_instruction_trials)%4!=0:
                             last_phase_duration = self.settings['design'].get('ITI_time')
                         else:
                             last_phase_duration = np.inf
@@ -506,7 +526,7 @@ class PredSession(PylinkEyetrackerSession):
             elif trial_type == 'RestingTrial':
                 parameters = {'trial_type': 'RestingTrial',}
                 if self.settings['design'].get('mri_scan'):
-                    if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                    if (self.trial_counter+1-self.nr_instruction_trials)%4!=0:
                         last_phase_duration = self.settings['design'].get('ITI_time')
                     else:
                         last_phase_duration = np.inf
@@ -534,7 +554,7 @@ class PredSession(PylinkEyetrackerSession):
             elif trial_type == 'SuckerTrial':
                 parameters = {'trial_type': 'SuckerTrial',}
                 if self.settings['design'].get('mri_scan'):
-                    if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                    if (self.trial_counter+1-self.nr_instruction_trials)%4!=0:
                         last_phase_duration = self.settings['design'].get('ITI_time')
                     else:
                         last_phase_duration = np.inf
@@ -563,7 +583,18 @@ class PredSession(PylinkEyetrackerSession):
             
             self.trial_counter += 1
 
-        self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter, keys=['space']))
+        if (self.ses_nr == 'test') and self.settings['design'].get('mri_scan'):
+            self.trials.append(DummyWaiterTrial(
+                                                session=self,
+                                                trial_nr=self.trial_counter,
+                                                phase_durations=[np.inf, self.settings["design"].get("end_duration")],
+                                                txt=dummy_txt,
+                                                draw_each_frame=False,
+                                            ))
+            self.trial_counter += 1
+        else:
+            self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter, keys=['space']))
+            self.trial_counter += 1
 
     def _create_locations(self):
         self.angles_gabors = [int(i) for i in np.linspace(45, 360+45, 4, endpoint=False)]%np.array([360])
@@ -598,7 +629,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth")/2,
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
                                                      self.win.monitor),
         )
 
@@ -963,7 +994,7 @@ class PingSession(PylinkEyetrackerSession):
         """
 
         # Create sequence of trials
-        self.nr_ping = 144
+        self.nr_ping = self.settings["design"].get("pingpRF_ping_nr")
         self.nr_rest = 0
         self.nr_sucker = 0
         self.seq_trials = np.hstack([
@@ -1046,18 +1077,25 @@ class PingSession(PylinkEyetrackerSession):
         self.checkerboards = {}
         
         for _, (angle, ori, direction) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180], [-1, 1]))):
+            if direction == 1:
+                base_contrast = self.settings["stimuli"].get("ping_contrast_lowest")
+            elif direction == -1:
+                base_contrast = self.settings["stimuli"].get("ping_contrast_highest")
+            else:
+                raise ValueError("direction should be 1 or -1")
             self.checkerboards[(angle, ori, direction)] = CheckerboardsAdjContrast(
                 win=self.win, 
                 size=self.settings["stimuli"].get("stim_size_deg"), 
-                sf=8, 
+                sf=self.settings["stimuli"].get("stim_spatial_freq"), 
                 ori=ori, 
                 ecc=self.settings["stimuli"].get("distance_from_center"), 
                 roll_dist=self.roll_dist,
                 angle=angle,
                 direction=direction,
+                adj_rate=self.settings["stimuli"].get("ping_contrast_adj_rate"),
                 phase=0, 
-                contrast=0.5,
-                temporal_freq=self.settings['stimuli'].get('fixation_temporal_freq'),
+                contrast=base_contrast,
+                temporal_freq=self.settings['stimuli'].get('ping_temporal_freq'),
                 units="deg")
             self.checkerboards[(angle, ori, direction)].draw()
 
@@ -1088,22 +1126,43 @@ class PingSession(PylinkEyetrackerSession):
             draw_each_frame=False,
         )
 
+        if self.ses_nr == 'train':
+            dummy_txt = self.settings["stimuli"].get("pretrigger_text")
+        else:
+            dummy_txt= ''
+
         dummy_trial = DummyWaiterTrial(
             session=self,
             trial_nr=1,
             phase_durations=[np.inf, self.settings["design"].get("start_duration")],
-            txt=self.settings["stimuli"].get("pretrigger_text"),
+            txt=dummy_txt,
             draw_each_frame=False,
         )
-        self.trials = [instruction_trial, dummy_trial]
-        # self.trials = [dummy_trial]
+
+        start_trial = WaitStartTriggerTrial(
+            session=self,
+            trial_nr=1,
+            phase_durations=[np.inf],
+            draw_each_frame=False,
+        )
+
+        if (not self.settings['design'].get('mri_scan')) or (self.ses_nr == 'train'):
+            self.trials = [instruction_trial]
+            self.trials.append(DummyWaiterTrial(
+                                                session=self,
+                                                trial_nr=1,
+                                                phase_durations=[np.inf, self.settings["design"].get("train_start_duration")],
+                                                txt=dummy_txt,
+                                                draw_each_frame=False,
+                                            ))
+        else:
+            self.trials = [dummy_trial, start_trial]
+
         self.nr_instruction_trials = len(self.trials)
         self.trial_counter = len(self.trials)
 
         # Create trials
         ind_PingTrial = 0
-        self.resp_ping = np.empty(0) # record if the response is correct for each non-task trial
-        print(self.seq_ping_direction)
         for trial_type in self.seq_trials:
             # Ping trials
             if trial_type == 'PingTrial':
@@ -1114,7 +1173,6 @@ class PingSession(PylinkEyetrackerSession):
                     elif self.seq_ping_direction[ind_PingTrial] == -1:
                         corr_key = self.settings['various'].get('buttons_train')[1]
                     else:
-                        print(self.seq_ping_direction[ind_PingTrial])
                         raise ValueError("direction should be 1 or -1")
                     
                     parameters  = {'trial_type': 'PingTrial',
@@ -1161,7 +1219,7 @@ class PingSession(PylinkEyetrackerSession):
                                 'ind_TaskTrial':ind_PingTrial,}
                     
                     if self.settings['design'].get('mri_scan'):
-                        if (self.trial_counter+1+self.nr_instruction_trials)%4!=0:
+                        if (self.trial_counter+1-self.nr_instruction_trials)%4!=0:
                             last_phase_duration = self.settings['design'].get('ITI_time')
                         else:
                             last_phase_duration = np.inf
@@ -1190,8 +1248,19 @@ class PingSession(PylinkEyetrackerSession):
                 raise ValueError("trial type should be PingTrial, RestingTrial or SuckerTrial")
             
             self.trial_counter += 1
-
-        self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter, keys=['space']))
+        
+        if (self.ses_nr == 'test') and self.settings['design'].get('mri_scan'):
+            self.trials.append(DummyWaiterTrial(
+                                                session=self,
+                                                trial_nr=self.trial_counter,
+                                                phase_durations=[np.inf, self.settings["design"].get("end_duration")],
+                                                txt=dummy_txt,
+                                                draw_each_frame=False,
+                                            ))
+            self.trial_counter += 1
+        else:
+            self.trials.append(FeedbackTrial(session=self, trial_nr=self.trial_counter, keys=['space']))
+            self.trial_counter += 1
 
     def _create_locations(self):
         self.angles_pings = [int(i) for i in np.linspace(45, 360+45, 24, endpoint=False)]%np.array([360])
@@ -1225,7 +1294,7 @@ class PingSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth")/2,
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
                                                      self.win.monitor),
         )
 
