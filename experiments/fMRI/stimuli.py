@@ -200,17 +200,24 @@ class CheckerboardsAdjContrast(Checkerboards):
             self.beta = adj_rate
         else:
             raise ValueError("direction should be 0, 1, or -1")
-    
+        self.last_time_contrast = getTime()
+        self.inverse = 1
+
     def draw(self):
         present_time = getTime()
         if (present_time - self.last_time) > 0.1:
             self.last_time = present_time
+            self.last_time_contrast = present_time
             self.checkerboards.contrast = self.contrast
-        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 2)):
-            self.checkerboards.contrast = self.checkerboards.contrast + self.beta * (present_time - self.last_time) * self.direction
-            self.checkerboards.ori += 45
-            self.last_time = present_time
-        if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
             self.checkerboards.draw()
-        
-        print("Contrast: ", self.checkerboards.contrast)
+        else:
+            self.inverse = -self.inverse
+            if (present_time - self.last_time) > (1.0/(self.temporal_freq * 2)):
+                self.checkerboards.contrast = self.inverse * (abs(self.checkerboards.contrast) + self.beta * (present_time - self.last_time_contrast) * self.direction)
+                self.checkerboards.ori += 45
+                self.last_time = present_time
+                self.last_time_contrast = present_time
+            if (present_time - self.last_time) > (1.0/(self.temporal_freq * 4)):
+                self.checkerboards.contrast = (abs(self.checkerboards.contrast) + self.beta * (present_time - self.last_time_contrast) * self.direction)
+                self.last_time_contrast = present_time
+                self.checkerboards.draw()

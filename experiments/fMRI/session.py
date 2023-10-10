@@ -1074,6 +1074,10 @@ class PingSession(PylinkEyetrackerSession):
         self._create_fixation()
         
         # Set up checkerboards
+        
+        contrast_range = self.settings["stimuli"].get("ping_contrast_highest") - self.settings["stimuli"].get("ping_contrast_lowest")
+        self.ping_contrast_adj_rate = contrast_range / self.settings["design"].get("fixation_refresh_time")
+
         self.checkerboards = {}
         
         for _, (angle, ori, direction) in enumerate(list(itertools.product(self.angles_pings, [0, 45, 135, 180], [-1, 1]))):
@@ -1083,6 +1087,7 @@ class PingSession(PylinkEyetrackerSession):
                 base_contrast = self.settings["stimuli"].get("ping_contrast_highest")
             else:
                 raise ValueError("direction should be 1 or -1")
+            
             self.checkerboards[(angle, ori, direction)] = CheckerboardsAdjContrast(
                 win=self.win, 
                 size=self.settings["stimuli"].get("stim_size_deg"), 
@@ -1092,7 +1097,7 @@ class PingSession(PylinkEyetrackerSession):
                 roll_dist=self.roll_dist,
                 angle=angle,
                 direction=direction,
-                adj_rate=self.settings["stimuli"].get("ping_contrast_adj_rate"),
+                adj_rate=self.ping_contrast_adj_rate,
                 phase=0, 
                 contrast=base_contrast,
                 temporal_freq=self.settings['stimuli'].get('ping_temporal_freq'),
@@ -1351,7 +1356,6 @@ class PingSession(PylinkEyetrackerSession):
         self.data_yml_log["window"] = {
             "roll_dist": self.roll_dist
         }
-        print(self.data_yml_log)
 
     def save_yaml_log(self):
         if not os.path.isfile(self.yml_log):

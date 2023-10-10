@@ -14,9 +14,9 @@ monitor:
   #     size: [3072, 1920]
   #     width: 30
   #     distance: 75
-  name: BB_lab
-  width: 52.6  # width of monitor (in cm)
-  distance: 75  # distance of participant from monitor (in cm)
+  name: Spinoza_7T
+  width: 70.9  # width of monitor (in cm)
+  distance: 196  # distance of participant from monitor (in cm)
   # gamma: 2.3  # specific value for gamma correction
   verbose: False # set this parameter to False when you're running your experiment for real
 
@@ -24,7 +24,7 @@ window:
   size: [1920, 1080]
   units: pix
   fullscr: True
-  screen: 0
+  screen: 1
   color: [-0.5, -0.5, -0.5]
 
 eyetracker:
@@ -45,9 +45,8 @@ stimuli:
   stim_spatial_freq: 5
   ping_temporal_freq: 8 # hz
   distance_from_center: 2 # degree
-  ping_contrast_lowest: 0.23
+  ping_contrast_lowest: 0.1
   ping_contrast_highest: 1
-  ping_contrast_adj_rate: 2.31
 
 design:
   mri_scan: True
