@@ -1,7 +1,7 @@
 monitor:
   # Spinoza_7T
   #     width: 70.9
-  #     distance: 196
+  #     distance: 194
   #     gamma: 2.1 # grey: 2.060, red: 2.114, green: 2.189, blue: 2.329
   # psychophysics_lab
   #     width: 70.9
@@ -16,7 +16,7 @@ monitor:
   #     distance: 75
   name: Spinoza_7T
   width: 70.9  # width of monitor (in cm)
-  distance: 196  # distance of participant from monitor (in cm)
+  distance: 194  # distance of participant from monitor (in cm)
   # gamma: 2.3  # specific value for gamma correction
   verbose: False # set this parameter to False when you're running your experiment for real
 
