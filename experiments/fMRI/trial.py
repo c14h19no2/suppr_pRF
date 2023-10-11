@@ -522,6 +522,7 @@ class PingpRFTrial(Trial):
             self.session.fixation_dot.draw()
             self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'], self.parameters['direction'])].draw()
             self.session.win.flip()
+            self.ITI_start_time = getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
@@ -532,8 +533,9 @@ class PingpRFTrial(Trial):
         if self.phase == 2 or self.phase == 1:
             if events is not None:
                 for key, t in events:
+                    t_get_events = getTime()
                     if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                        if key == self.session.mri_trigger:
+                        if (key == self.session.mri_trigger) & (t_get_events-self.ITI_start_time > 2.7):
                             self.stop_phase()
 
     def run(self):

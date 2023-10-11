@@ -604,7 +604,7 @@ class PredSession(PylinkEyetrackerSession):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0.5, 0.5, 0.5, 1),
+            color=(0, 0, 0, 1),
             pos=[0, self.roll_dist],
             **{"lineWidth": monitorunittools.deg2pix(self.settings["stimuli"].get("outer_fix_linewidth"),
                                                      self.win.monitor)},
@@ -806,7 +806,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0.5, 0.5, 0.5, 1),
+            color=(0, 0, 0, 1),
             pos=[0, self.roll_dist],
             **{"lineWidth": monitorunittools.deg2pix(self.settings["stimuli"].get("outer_fix_linewidth"),
                                                      self.win.monitor)},
@@ -1274,7 +1274,7 @@ class PingSession(PylinkEyetrackerSession):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0.5, 0.5, 0.5, 1),
+            color=(0, 0, 0, 1),
             pos=[0, self.roll_dist],
             **{"lineWidth": monitorunittools.deg2pix(self.settings["stimuli"].get("outer_fix_linewidth"),
                                                      self.win.monitor)},

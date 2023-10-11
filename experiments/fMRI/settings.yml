@@ -31,13 +31,15 @@ eyetracker:
   address: '100.1.1.1'
   dot_size: 0.1  # in deg
   options:
-    calibration_type: HV9
+    calibration_type: HV5
+    calibration_area_proportion: 0.4 0.4
+    validation_area_proportion: 0.4 0.4
 
 stimuli:
   refresh_rate: 120 # this is just a suggestion; the code doesn't depend on it
   instruction_text: 'Please keep looking at the center of screen \n during the experiment, it is important!'
   pretrigger_text: 'Press "t" to start the experiment'
-  outer_fix_linewidth: 0.05
+  outer_fix_linewidth: 0.015
   fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
