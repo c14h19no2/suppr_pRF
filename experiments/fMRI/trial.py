@@ -358,10 +358,9 @@ class DummyWaiterTrial(InstructionTrial):
         self.session.fixbullseye.draw()
         if self.phase == 0:
             self.text.draw()
-            self.session.fixation_dot.draw()
         else:
-            self.session.fixation_dot.draw()
             pass
+        self.session.fixation_dot.draw()
         self.session.win.flip()
 
     def get_events(self):

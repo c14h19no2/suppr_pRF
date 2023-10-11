@@ -616,7 +616,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_size_deg")/5,
                                                      self.win.monitor),
         )
 
@@ -629,7 +629,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_size_deg")/5,
                                                      self.win.monitor),
         )
 
@@ -818,7 +818,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_size_deg")/5,
                                                      self.win.monitor),
         )
 
@@ -1286,7 +1286,7 @@ class PingSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_size_deg")/5,
                                                      self.win.monitor),
         )
 
@@ -1299,7 +1299,7 @@ class PingSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
-            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_cross_lindwidth"),
+            cross_lindwidth=monitorunittools.deg2pix(self.settings["stimuli"].get("fixation_size_deg")/5,
                                                      self.win.monitor),
         )
 
