@@ -9,8 +9,6 @@ from session import RollDownTheWindowSession
 parser = argparse.ArgumentParser(description='A script to run the suppression-pRF task.')
 parser.add_argument('subject', default=None, nargs='?', 
                     help='the subject of the experiment, as a zero-filled integer, such as 001, or 04.')
-parser.add_argument('ses', default=None, type=str, nargs='?', 
-                    help="the ses nr of the experiment, can be 'practice', 'train' or 'test'..")
 parser.add_argument('eyelink', default=0, type=int, nargs='?')
 
 cmd_args = parser.parse_args()
