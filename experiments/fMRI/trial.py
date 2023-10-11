@@ -60,7 +60,6 @@ class TestTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-
         if self.keys is None:
             if events:
                 self.stop_phase()
@@ -117,6 +116,7 @@ class TaskTrial(Trial):
             self.session.gabors[(self.parameters['angle_T'], self.parameters['ori_T'])].draw()
             self.session.gabors[(self.parameters['angle_D'], self.parameters['ori_D'])].draw()
             self.session.win.flip()
+            self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
@@ -128,7 +128,7 @@ class TaskTrial(Trial):
             if events is not None:
                 for key, t in events:
                     if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                        if key == self.session.mri_trigger:
+                        if (key == self.session.mri_trigger) & (t - self.ITI_start_time > (self.session.settings['design'].get('ITI_time')-0.1)):
                             self.stop_phase()
 
     def run(self):
@@ -200,6 +200,7 @@ class PingTrial(Trial):
             self.session.fixation_dot.draw()
             self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'])].draw()
             self.session.win.flip()
+            self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
@@ -221,7 +222,7 @@ class PingTrial(Trial):
                     if events is not None:
                         for key, t in events:
                             if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                                if key == self.session.mri_trigger:
+                                if (key == self.session.mri_trigger) & (t - self.ITI_start_time > (self.session.settings['design'].get('ITI_time')-0.1)):
                                     self.stop_phase()
 
     def run(self):
@@ -243,6 +244,7 @@ class RestingTrial(Trial):
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
+            self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
@@ -250,12 +252,11 @@ class RestingTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-
         if self.phase == 2:
             if events is not None:
                 for key, t in events:
                     if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                        if key == self.session.mri_trigger:
+                        if (key == self.session.mri_trigger) & (t - self.ITI_start_time > (self.session.settings['design'].get('ITI_time')-0.1)):
                             self.stop_phase()
 
     def run(self):
@@ -263,7 +264,6 @@ class RestingTrial(Trial):
 
 class SuckerTrial(Trial):
     """
-    
     """
     def __init__(self, session, trial_nr, phase_durations, phase_names,
                  parameters, keys, timing, verbose=True, draw_each_frame=False):
@@ -281,6 +281,7 @@ class SuckerTrial(Trial):
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
+            self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.inner_circle.opacity = 1
@@ -290,11 +291,11 @@ class SuckerTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-        if self.phase == 2 or self.phase == 1:
+        if self.phase == 2:
             if events is not None:
                 for key, t in events:
                     if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                        if key == self.session.mri_trigger:
+                        if (key == self.session.mri_trigger) & (t - self.ITI_start_time > (self.session.settings['design'].get('ITI_time')-0.1)):
                             self.stop_phase()
 
     def run(self):
@@ -327,7 +328,6 @@ class InstructionTrial(Trial):
                              anchorVert = 'center')
         self.text.setSize(txt_height)
         self.keys = keys
-        
 
     def draw(self):
         self.session.fixbullseye.draw()
@@ -337,7 +337,6 @@ class InstructionTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-
         if self.keys is None:
             if events:
                 self.stop_phase()
@@ -351,7 +350,6 @@ class DummyWaiterTrial(InstructionTrial):
 
     def __init__(self, session, trial_nr, phase_durations=None,
                  txt="Waiting for scanner triggers.", draw_each_frame=False, **kwargs):
-
         super().__init__(session, trial_nr, phase_durations, txt, draw_each_frame=draw_each_frame, **kwargs)
     
     def draw(self):
@@ -365,7 +363,6 @@ class DummyWaiterTrial(InstructionTrial):
 
     def get_events(self):
         events = Trial.get_events(self)
-
         if events:
             for key, t in events:
                 if key == self.session.mri_trigger:
@@ -387,7 +384,6 @@ class WaitStartTriggerTrial(Trial):
 
     def get_events(self):
         events = Trial.get_events(self)
-
         if events:
             for key, t in events:
                 if key == self.session.mri_trigger:
@@ -401,13 +397,11 @@ class OutroTrial(InstructionTrial):
     """ Simple trial with only fixation cross.  """
 
     def __init__(self, session, trial_nr, phase_durations, txt='', draw_each_frame=False, **kwargs):
-
         txt = ''''''
         super().__init__(session, trial_nr, phase_durations, txt=txt, draw_each_frame=draw_each_frame, **kwargs)
 
     def get_events(self):
         events = Trial.get_events(self)
-
         if events:
             for key, _ in events:
                 if key == 'space':
@@ -522,7 +516,7 @@ class PingpRFTrial(Trial):
             self.session.fixation_dot.draw()
             self.session.checkerboards[(self.parameters['angle_Ping'], self.parameters['ori_Ping'], self.parameters['direction'])].draw()
             self.session.win.flip()
-            self.ITI_start_time = getTime()
+            self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
@@ -530,12 +524,11 @@ class PingpRFTrial(Trial):
 
     def get_events(self):
         events = super().get_events()
-        if self.phase == 2 or self.phase == 1:
+        if self.phase == 2:
             if events is not None:
                 for key, t in events:
-                    t_get_events = getTime()
                     if (self.trial_nr+1-self.session.nr_instruction_trials)%4 == 0:
-                        if (key == self.session.mri_trigger) & (t_get_events-self.ITI_start_time > 2.7):
+                        if (key == self.session.mri_trigger) & (t - self.ITI_start_time > (self.session.settings['design'].get('ITI_time')-0.1)):
                             self.stop_phase()
 
     def run(self):
