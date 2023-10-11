@@ -306,9 +306,7 @@ class InstructionTrial(Trial):
 
     def __init__(self, session, trial_nr, phase_durations=[np.inf],
                  txt=None, keys=None, draw_each_frame=False, **kwargs):
-
         super().__init__(session, trial_nr, phase_durations, draw_each_frame=draw_each_frame, **kwargs)
-
         txt_height = self.session.settings['various'].get('text_height')
         txt_width = self.session.settings['various'].get('text_width')
         text_position_x = self.session.settings['various'].get('text_position_x')
