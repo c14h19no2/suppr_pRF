@@ -356,11 +356,11 @@ class DummyWaiterTrial(InstructionTrial):
     
     def draw(self):
         self.session.fixbullseye.draw()
+        self.session.fixation_dot.draw()
         if self.phase == 0:
             self.text.draw()
         else:
             pass
-        self.session.fixation_dot.draw()
         self.session.win.flip()
 
     def get_events(self):
@@ -371,7 +371,6 @@ class DummyWaiterTrial(InstructionTrial):
                 if key == self.session.mri_trigger:
                     if self.phase == 0:
                         self.stop_phase()
-                        self.session.win.flip()
                         #####################################################
                         ## TRIGGER HERE
                         #####################################################
@@ -393,7 +392,6 @@ class WaitStartTriggerTrial(Trial):
             for key, t in events:
                 if key == self.session.mri_trigger:
                     self.stop_phase()
-                    self.session.win.flip()
                     #####################################################
                     ## TRIGGER HERE
                     #####################################################
