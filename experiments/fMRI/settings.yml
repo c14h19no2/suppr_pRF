@@ -60,7 +60,7 @@ design:
   ITI_time: 2.8 # also waiting for t
   feedback_time: 0.2
   pingpRF_ping_nr: 144
-  supprpRF_practice_task_nr:
+  supprpRF_practice_task_nr: 48
   supprpRF_train_task_nr: 192
   supprpRF_testtrain_task_nr: 48
   supprpRF_testtrain_ping_nr: 48
