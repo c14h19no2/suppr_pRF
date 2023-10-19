@@ -5,7 +5,7 @@ from datetime import datetime
 import argparse
 from pathlib import Path
 from psychopy import logging
-from session import PredSession, PingSession
+from session import PredSession, PingSession, AwarenessSession
 
 parser = argparse.ArgumentParser(description='A script to run the suppression-pRF task.')
 parser.add_argument('subject', default=None, nargs='?', 
@@ -13,7 +13,7 @@ parser.add_argument('subject', default=None, nargs='?',
 parser.add_argument('ses', default=None, type=str, nargs='?', 
                     help="the ses nr of the experiment, can be 'practice', 'train' or 'test'..")
 parser.add_argument('task', default=None, type=str, nargs='?', 
-                    help="the task of the experiment, can be 'neutral', 'bias1', 'bias2', or 'ping'.")
+                    help="the task of the experiment, can be 'neutral', 'bias1', 'bias2', 'ping', or 'AwarenessSession'.")
 parser.add_argument('run', default=None, type=int, nargs='?', 
                     help='the run nr of the experiment, an integer, such as 1, or 99.')
 parser.add_argument('eyelink', default=0, type=int, nargs='?')
@@ -37,7 +37,7 @@ if ses not in ['practice', 'train', 'test']:
     raise ValueError(
         'session must be a string, such as train, or test')
 
-if task not in ['neutral', 'bias1', 'bias2', 'ping']:
+if task not in ['neutral', 'bias1', 'bias2', 'ping', 'awareness']:
     if task not in ['0', '1', '2']:
         raise ValueError(
             'task must be a string, such as neutral, bias1, or bias2, or 0, 1, or 2')
@@ -77,8 +77,17 @@ if task == 'ping':
                         run_nr=run,
                         settings_file=settings_fn, 
                         eyetracker_on=eyetracker_on)
-else:
+elif task in ['neutral', 'bias1', 'bias2']:
     session_object = PredSession(output_str=output_str,
+                        output_dir=output_dir,
+                        subject=subject,
+                        ses_nr=ses,
+                        task=task,
+                        run_nr=run,
+                        settings_file=settings_fn, 
+                        eyetracker_on=eyetracker_on)
+elif task == 'awareness':
+    session_object = AwarenessSession(output_str=output_str,
                         output_dir=output_dir,
                         subject=subject,
                         ses_nr=ses,
