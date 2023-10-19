@@ -935,15 +935,16 @@ class AwarenessCheckTrial(Trial):
             **kwargs,
         )
         self.keys = keys
+        self.highlighted = highlighted
+
+        # text
         if txt is None and len(highlighted) == 2:
             self.txt = f"Do the highlighted locations contain the HPL of distractor?"
         elif txt is None and len(highlighted) == 1:
             self.txt = f"Is the highlighted location HPL of distractor or not?"
         else:
             self.txt = txt
-        self.highlighted = highlighted
 
-        # text
         txt_height = self.session.settings["various"].get("text_height")
         txt_width = self.session.settings["various"].get("text_width")
         text_position_x = self.session.settings["various"].get("text_position_x")
