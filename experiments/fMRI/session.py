@@ -295,7 +295,6 @@ class PredSession(PylinkEyetrackerSession):
         """Creates all stimuli used in the experiment."""
         # create instruction text
         self.instruction_text = self.settings["stimuli"].get("instruction_text")
-        self.instruction_text = eval(f"f'{self.instruction_text}'")
 
         # Create picture locations
         self._create_locations()
@@ -401,13 +400,25 @@ class PredSession(PylinkEyetrackerSession):
             phase_durations=[np.inf],
             txt=self.instruction_text,
             keys=["space"],
+            txt_height=self.settings["various"].get("text_height"),
+            txt_width=self.settings["various"].get("text_width"),
+            txt_position_x=self.settings["various"].get("text_position_x"),
+            txt_position_y=self.settings["various"].get("text_position_y")
+            + self.roll_dist,
             draw_each_frame=False,
         )
-
-        if self.ses_nr == "train":
+        if self.ses_nr == "practice":
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
-        else:
+        if self.ses_nr == "train" and (not self.settings["design"].get("mri_scan")):
+            dummy_txt = self.settings["stimuli"].get("pretrigger_text")
+        elif self.ses_nr == "train" and self.settings["design"].get("mri_scan"):
+            dummy_txt = self.settings["stimuli"].get("instruction_text")
+        elif self.ses_nr == "test" and (not self.settings["design"].get("mri_scan")):
+            dummy_txt = self.settings["stimuli"].get("pretrigger_text")
+        elif self.ses_nr == "test" and self.settings["design"].get("mri_scan"):
             dummy_txt = ""
+        else:
+            raise ValueError("session should be 'practice', 'train', or 'test'")
 
         dummy_trial = DummyWaiterTrial(
             session=self,
@@ -415,6 +426,10 @@ class PredSession(PylinkEyetrackerSession):
             phase_durations=[np.inf, self.settings["design"].get("start_duration")],
             txt=dummy_txt,
             draw_each_frame=False,
+            txt_height=self.settings["various"].get("text_height"),
+            txt_width=self.settings["various"].get("text_width"),
+            txt_position_x=self.settings["various"].get("text_position_x"),
+            txt_position_y=self.settings["various"].get("text_position_y"),
         )
 
         start_trial = WaitStartTriggerTrial(
@@ -435,6 +450,10 @@ class PredSession(PylinkEyetrackerSession):
                         self.settings["design"].get("train_start_duration"),
                     ],
                     txt=dummy_txt,
+                    txt_height=self.settings["various"].get("text_height"),
+                    txt_width=self.settings["various"].get("text_width"),
+                    txt_position_x=self.settings["various"].get("text_position_x"),
+                    txt_position_y=self.settings["various"].get("text_position_y"),
                     draw_each_frame=False,
                 )
             )
@@ -1258,6 +1277,11 @@ class PingSession(PylinkEyetrackerSession):
             phase_durations=[np.inf],
             txt=self.instruction_text,
             keys=["space"],
+            txt_height=self.settings["various"].get("text_height"),
+            txt_width=self.settings["various"].get("text_width"),
+            txt_position_x=self.settings["various"].get("text_position_x"),
+            txt_position_y=self.settings["various"].get("text_position_y")
+            + self.roll_dist,
             draw_each_frame=False,
         )
 
@@ -1292,6 +1316,11 @@ class PingSession(PylinkEyetrackerSession):
                         self.settings["design"].get("train_start_duration"),
                     ],
                     txt=dummy_txt,
+                    txt_height=self.settings["various"].get("text_height"),
+                    txt_width=self.settings["various"].get("text_width"),
+                    txt_position_x=self.settings["various"].get("text_position_x"),
+                    txt_position_y=self.settings["various"].get("text_position_y")
+                    + self.roll_dist,
                     draw_each_frame=False,
                 )
             )
@@ -1704,15 +1733,21 @@ class AwarenessSession(PylinkEyetrackerSession):
     def create_trials(self):
         self.trial_counter = 0
         self.trials = []
-        # self.trials.append(
-        #     InstructionTrial_awareness(
-        #         session=self,
-        #         trial_nr=self.trial_counter,
-        #         phase_durations=[np.inf],
-        #         keys=self.settings["various"].get("buttons_test"),
-        #         draw_each_frame=False,
-        #     )
-        # )
+        self.trials.append(
+            InstructionTrial(
+                session=self,
+                trial_nr=self.trial_counter,
+                phase_durations=[np.inf],
+                keys=self.settings["various"].get("buttons_test"),
+                txt=self.settings["stimuli"].get("awareness_instruction_text"),
+                txt_height=self.settings["various"].get("text_height"),
+                txt_width=self.settings["various"].get("text_width"),
+                txt_position_x=self.settings["various"].get("text_position_x"),
+                txt_position_y=self.settings["various"].get("text_position_y")
+                + self.roll_dist - 1,
+                draw_each_frame=False,
+            )
+        )
 
         for highlighted in self.seq_awareness_check:
             self.trials.append(

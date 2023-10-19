@@ -480,6 +480,10 @@ class InstructionTrial(Trial):
         phase_durations=[np.inf],
         txt=None,
         keys=None,
+        txt_height=0.3,
+        txt_width=15,
+        txt_position_x=0,
+        txt_position_y=0.5,
         draw_each_frame=False,
         **kwargs,
     ):
@@ -489,13 +493,6 @@ class InstructionTrial(Trial):
             phase_durations,
             draw_each_frame=draw_each_frame,
             **kwargs,
-        )
-        txt_height = self.session.settings["various"].get("text_height")
-        txt_width = self.session.settings["various"].get("text_width")
-        text_position_x = self.session.settings["various"].get("text_position_x")
-        text_position_y = (
-            self.session.settings["various"].get("text_position_y")
-            + self.session.roll_dist
         )
 
         if txt is None:
@@ -507,7 +504,7 @@ class InstructionTrial(Trial):
             height=txt_height,
             wrapWidth=txt_width,
             units="deg",
-            pos=[text_position_x, text_position_y],
+            pos=[txt_position_x, txt_position_y],
             font="Arial",
             alignText="center",
             anchorHoriz="center",
@@ -939,9 +936,9 @@ class AwarenessCheckTrial(Trial):
 
         # text
         if txt is None and len(highlighted) == 2:
-            self.txt = f"Do the highlighted locations contain the HPL of distractor?"
+            self.txt = self.session.settings["stimuli"].get("awareness_text_paired")
         elif txt is None and len(highlighted) == 1:
-            self.txt = f"Is the highlighted location HPL of distractor or not?"
+            self.txt = self.session.settings["stimuli"].get("awareness_text_single")
         else:
             self.txt = txt
 
