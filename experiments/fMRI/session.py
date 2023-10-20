@@ -247,13 +247,13 @@ class PredSession(PylinkEyetrackerSession):
         Select ping pairs from ping pool, the pings in each pair should be different and 90 degree apart.
         """
         ping_pairs = np.empty((0, 2))
-        print("Creating Ping pairs...")
+        logging.warn("Creating Ping pairs...")
         dist_pings = 90
         run = 0
 
         while len(ping_pairs) * 2 != len(self.angles_pings):
             if run > 0:
-                print("Creation failed, trying to re-run it, run ", run)
+                logging.warn("Creation failed, trying to re-run it, run ", run)
             run += 1
             ping_pool = deepcopy(self.angles_pings)
             ping_pool_tmp = deepcopy(ping_pool)
@@ -282,12 +282,12 @@ class PredSession(PylinkEyetrackerSession):
                     break
 
                 if getTime() - t0 > 0.5:
-                    print("Time out, re-run it")
+                    logging.warn("Time out, re-run it")
                     break
 
         ping_pairs = ping_pairs.astype(int)
 
-        print("Ping pairs created successfully")
+        logging.warn("Ping pairs created successfully")
 
         return ping_pairs
 
@@ -323,7 +323,6 @@ class PredSession(PylinkEyetrackerSession):
                 )
             )
         ):
-            # print(angle, ori)
             self.gabors[(angle, ori)] = Gabors(
                 win=self.win,
                 size=self.settings["stimuli"].get("stim_size_deg"),
@@ -357,7 +356,6 @@ class PredSession(PylinkEyetrackerSession):
         for _, (angle, ori) in enumerate(
             list(itertools.product(self.angles_pings, [0, 45, 135, 180]))
         ):
-            # print(angle, ori)
             self.checkerboards[(angle, ori)] = Checkerboards(
                 win=self.win,
                 size=self.settings["stimuli"].get("stim_size_deg"),
@@ -412,7 +410,7 @@ class PredSession(PylinkEyetrackerSession):
         if self.ses_nr == "train" and (not self.settings["design"].get("mri_scan")):
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
         elif self.ses_nr == "train" and self.settings["design"].get("mri_scan"):
-            dummy_txt = self.settings["stimuli"].get("instruction_text")
+            dummy_txt = self.settings["stimuli"].get("pretrigger_text")
         elif self.ses_nr == "test" and (not self.settings["design"].get("mri_scan")):
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
         elif self.ses_nr == "test" and self.settings["design"].get("mri_scan"):
@@ -529,7 +527,10 @@ class PredSession(PylinkEyetrackerSession):
                     elif self.oris_gabors[ind_TaskTrial, 0] == 45:
                         corr_key = self.settings["various"].get("buttons_test")[1]
                     else:
-                        print(self.oris_gabors[ind_TaskTrial, 0])
+                        logging.warn(
+                            "Angle of target location is ",
+                            self.oris_gabors[ind_TaskTrial, 0],
+                        )
                         raise ValueError("target location should be 45 or 135")
                     keys = self.settings["various"].get("buttons_test")
                     parameters["corr_key"] = corr_key
@@ -562,7 +563,10 @@ class PredSession(PylinkEyetrackerSession):
                     elif self.oris_gabors[ind_TaskTrial, 0] == 45:
                         corr_key = self.settings["various"].get("buttons_train")[1]
                     else:
-                        print(self.oris_gabors[ind_TaskTrial, 0])
+                        logging.warn(
+                            "Angle of target location is ",
+                            self.oris_gabors[ind_TaskTrial, 0],
+                        )
                         raise ValueError("target location should be 45 or 135")
                     keys = self.settings["various"].get("buttons_train")
                     parameters["corr_key"] = corr_key
@@ -841,7 +845,7 @@ class PredSession(PylinkEyetrackerSession):
             self.roll_dist = 0
 
         self.data_yml_log["window"] = {"roll_dist": self.roll_dist}
-        print(self.data_yml_log)
+        logging.warn(self.data_yml_log)
 
     def save_yaml_log(self):
         if not os.path.isfile(self.yml_log):
@@ -986,7 +990,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
                     yml_random = yaml.safe_load(ymlseqfile)
                 except yaml.YAMLError as exc:
                     print(exc)
-            print(yml_random)
+            logging.warn("Subject yaml log file loaded:" + str(yml_random))
             self.data_yml_log = yml_random
             if yml_random.get("window") is None:
                 create_new_roll_dist = True
@@ -1006,10 +1010,9 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
             }
 
     def save_yaml_log(self):
-        print(self.yml_log)
-        print("running save_yaml_log")
+        logging.warn("running save_yaml_log")
         if not os.path.isfile(self.yml_log):
-            print("no yml log file")
+            logging.warn("no yml log file")
             with open(self.yml_log, "w") as ymlseqfile:
                 yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
         else:
@@ -1020,16 +1023,16 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
                     print(exc)
 
             if "window" not in yml_random:
-                print("window not in ymlseqfile")
-                print(self.data_yml_log)
+                logging.warn("window not in ymlseqfile")
+                logging.warn(self.data_yml_log)
                 with open(self.yml_log, "w") as ymlseqfile:
                     yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
             elif yml_random.get("window").get("roll_dist") != self.roll_dist:
-                print("roll_dist changed")
+                logging.warn("roll_dist changed")
                 with open(self.yml_log, "w") as ymlseqfile:
                     yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
             else:
-                print("roll_dist not changed")
+                logging.warn("roll_dist not changed")
                 pass
 
     def run(self):
@@ -1159,13 +1162,13 @@ class PingSession(PylinkEyetrackerSession):
         Select ping pairs from ping pool, the pings in each pair should be different and 90 degree apart.
         """
         ping_pairs = np.empty((0, 2))
-        print("Creating Ping pairs...")
+        logging.warn("Creating Ping pairs...")
         dist_pings = 90
         run = 0
 
         while len(ping_pairs) * 2 != len(self.angles_pings):
             if run > 0:
-                print("Creation failed, trying to re-run it, run ", run)
+                logging.warn("Creation failed, trying to re-run it, run ", run)
             run += 1
             ping_pool = deepcopy(self.angles_pings)
             ping_pool_tmp = deepcopy(ping_pool)
@@ -1194,12 +1197,12 @@ class PingSession(PylinkEyetrackerSession):
                     break
 
                 if getTime() - t0 > 0.5:
-                    print("Time out, re-run it")
+                    logging.warn("Time out, re-run it")
                     break
 
         ping_pairs = ping_pairs.astype(int)
 
-        print("Ping pairs created successfully")
+        logging.warn("Ping pairs created successfully")
 
         return ping_pairs
 
@@ -1381,7 +1384,10 @@ class PingSession(PylinkEyetrackerSession):
                     elif self.seq_ping_direction[ind_PingTrial] == -1:
                         corr_key = self.settings["various"].get("buttons_test")[1]
                     else:
-                        print(self.seq_ping_direction[ind_PingTrial])
+                        logging.warn(
+                            "The direction of the change of contrast of ping is ",
+                            self.seq_ping_direction[ind_PingTrial],
+                        )
                         raise ValueError("direction should be 1 or -1")
 
                     parameters = {
@@ -1690,7 +1696,6 @@ class AwarenessSession(PylinkEyetrackerSession):
 
         self.highlighters = {}
         for angle in self.angles:
-            # print(angle, ori)
             self.highlighters[angle] = Highlighter(
                 win=self.win,
                 circle_radius=self.settings["stimuli"].get("stim_size_deg"),
@@ -1731,8 +1736,6 @@ class AwarenessSession(PylinkEyetrackerSession):
     def create_trials(self):
         self.trial_counter = 0
         self.trials = []
-        # print('XXX')
-        # print(self.settings["stimuli"].get("awareness_instruction_image"))
         self.trials.append(
             InstructionTrial_awareness(
                 session=self,
@@ -1784,7 +1787,7 @@ class AwarenessSession(PylinkEyetrackerSession):
                     yml_random = yaml.safe_load(ymlseqfile)
                 except yaml.YAMLError as exc:
                     print(exc)
-            print(yml_random)
+            logging.warn("Subject yaml log file loaded:" + str(yml_random))
             self.data_yml_log = yml_random
             if yml_random.get("window") is None:
                 create_new_roll_dist = True
@@ -1804,9 +1807,9 @@ class AwarenessSession(PylinkEyetrackerSession):
             }
 
     def save_yaml_log(self):
-        print("running save_yaml_log")
+        logging.warn("running save_yaml_log")
         if not os.path.isfile(self.yml_log):
-            print("no yml log file")
+            logging.warn("yml log file not found, creating a new one")
             with open(self.yml_log, "w") as ymlseqfile:
                 yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
         else:
@@ -1817,16 +1820,16 @@ class AwarenessSession(PylinkEyetrackerSession):
                     print(exc)
 
             if "window" not in yml_random:
-                print("window not in ymlseqfile")
-                print(self.data_yml_log)
+                logging.warn("window not in ymlseqfile")
+                logging.warn(self.data_yml_log)
                 with open(self.yml_log, "w") as ymlseqfile:
                     yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
             elif yml_random.get("window").get("roll_dist") != self.roll_dist:
-                print("roll_dist changed")
+                logging.warn("roll_dist changed")
                 with open(self.yml_log, "w") as ymlseqfile:
                     yaml.dump(self.data_yml_log, ymlseqfile, default_flow_style=False)
             else:
-                print("roll_dist not changed")
+                logging.warn("roll_dist not changed")
                 pass
 
     def run(self):
