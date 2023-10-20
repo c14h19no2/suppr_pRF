@@ -1700,7 +1700,7 @@ class AwarenessSession(PylinkEyetrackerSession):
                 angle=angle,
                 fillcolor=self.settings["window"].get("color"),
                 linewidth=monitorunittools.deg2pix(
-                    self.settings["stimuli"].get("outer_fix_linewidth")*2,
+                    self.settings["stimuli"].get("outer_fix_linewidth") * 2,
                     self.win.monitor,
                 ),
             )
@@ -1744,8 +1744,13 @@ class AwarenessSession(PylinkEyetrackerSession):
                 txt_width=self.settings["various"].get("text_width"),
                 txt_position_x=self.settings["various"].get("text_position_x"),
                 txt_position_y=self.settings["various"].get("text_position_y")
-                + self.roll_dist - 1,
-                image=os.path.join(parent_dir, 'stimuli', self.settings["stimuli"].get("awareness_instruction_image")),
+                + self.roll_dist
+                - 1,
+                image=os.path.join(
+                    parent_dir,
+                    "stimuli",
+                    self.settings["stimuli"].get("awareness_instruction_image"),
+                ),
                 draw_each_frame=False,
             )
         )
@@ -1799,7 +1804,6 @@ class AwarenessSession(PylinkEyetrackerSession):
             }
 
     def save_yaml_log(self):
-        print(self.yml_log)
         print("running save_yaml_log")
         if not os.path.isfile(self.yml_log):
             print("no yml log file")
