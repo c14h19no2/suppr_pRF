@@ -6,7 +6,7 @@ import numpy as np
 
 from exptools2.core import Trial
 from psychopy.core import getTime
-from psychopy.visual import TextStim
+from psychopy.visual import TextStim, ImageStim
 
 
 class TestTrial(Trial):
@@ -944,9 +944,11 @@ class AwarenessCheckTrial(Trial):
 
         txt_height = self.session.settings["various"].get("text_height")
         txt_width = self.session.settings["various"].get("text_width")
-        text_position_x = self.session.settings["various"].get("text_position_x")
+        text_position_x = self.session.settings["various"].get(
+            "text_awarenesscheck_position_x"
+        )
         text_position_y = (
-            self.session.settings["various"].get("text_position_y")
+            self.session.settings["various"].get("text_awarenesscheck_position_y")
             + self.session.roll_dist
             + 2
         )
@@ -991,7 +993,7 @@ class AwarenessCheckTrial(Trial):
                     pass
 
 
-class InstructionTrial_awareness(Trial):
+class InstructionTrial_awareness(InstructionTrial):
     """Simple trial with instruction text."""
 
     def __init__(
@@ -1001,6 +1003,11 @@ class InstructionTrial_awareness(Trial):
         phase_durations=[np.inf],
         txt=None,
         keys=None,
+        txt_height=0.3,
+        txt_width=15,
+        txt_position_x=0,
+        txt_position_y=0.5,
+        image=None,
         draw_each_frame=False,
         **kwargs,
     ):
@@ -1008,47 +1015,30 @@ class InstructionTrial_awareness(Trial):
             session,
             trial_nr,
             phase_durations,
+            txt,
+            keys,
+            txt_height,
+            txt_width,
+            txt_position_x,
+            txt_position_y,
             draw_each_frame=draw_each_frame,
             **kwargs,
         )
-        txt_height = self.session.settings["various"].get("text_height")
-        txt_width = self.session.settings["various"].get("text_width")
-        text_position_x = self.session.settings["various"].get("text_position_x")
-        text_position_y = (
-            self.session.settings["various"].get("text_position_y")
-            + self.session.roll_dist
-        )
-
-        if txt is None:
-            txt = """Press any button to continue."""
-
-        self.text = TextStim(
+        self.instruction_picture = ImageStim(
             self.session.win,
-            txt,
-            height=txt_height,
-            wrapWidth=txt_width,
+            image,
             units="deg",
-            pos=[text_position_x, text_position_y],
-            font="Arial",
-            alignText="center",
-            anchorHoriz="center",
-            anchorVert="center",
+            pos=[
+                self.session.settings["various"].get("instruction_image_position_x"),
+                self.session.settings["various"].get("instruction_image_position_y"),
+            ],
+            size=self.session.settings["various"].get("instruction_image_size"),
         )
-        self.text.setSize(txt_height)
         self.keys = keys
 
     def draw(self):
         self.session.fixbullseye.draw()
         self.session.fixation_dot.draw()
         self.text.draw()
+        self.instruction_picture.draw()
         self.session.win.flip()
-
-    def get_events(self):
-        events = super().get_events()
-        if self.keys is None:
-            if events:
-                self.stop_phase()
-        else:
-            for key, t in events:
-                if key in self.keys:
-                    self.stop_phase()

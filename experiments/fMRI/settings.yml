@@ -43,18 +43,23 @@ stimuli:
   pretrigger_text: 'Press "t" to start the experiment'
   awareness_instruction_text: |
     In this experiment, there are four locations where 'gabors' appear. 
-    What you might not know is that one of these locations is a High 
-    Probability Location (HPL) for distractors, meaning it is more 
-    likely to contain a distractor than the others.
+    What you might not know is that the targets and distractors are not 
+    equally distributed! One of these locations is a High Probability 
+    Location (HPL) for distractors, meaning it is more likely to contain 
+    a distractor than the others.
     
     Now, in the following quiz, some locations may be highlighted. If 
     you believe the HPL is more likely among the highlighted locations, 
     press the LEFT button. Otherwise, press the right button.
+
+    Press any button to start the quiz...
+  awareness_instruction_image: responsebox_instruction.png
   awareness_text_paired: |
     Do the highlighted locations contain the HPL of distractor? 
     Press left button for YES and right button for NO.
   awareness_text_single: |
     Is the highlighted location HPL of distractor or not?
+    Press left button for YES and right button for NO.
   outer_fix_linewidth: 0.015
   fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
@@ -89,6 +94,11 @@ various:
   text_width: 15
   text_height: 0.3
   text_position_x: 0
-  text_position_y: 0.5
+  text_position_y: 1
+  instruction_image_position_x: 0
+  instruction_image_position_y: -2.3
+  instruction_image_size: [2.138, 1]
+  text_awarenesscheck_position_x: 0
+  text_awarenesscheck_position_y: 0.5
   buttons_train: ['2', '4']
   buttons_test: ['b', 'y']  # right index finger : b; right middle finger: y

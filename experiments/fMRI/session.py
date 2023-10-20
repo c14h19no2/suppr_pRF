@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-parent_dir = Path(__file__).resolve().parent.parent
+parent_dir = Path(__file__).resolve().parent
 sys.path.append(str(parent_dir))
 import os
 import glob
@@ -1677,7 +1677,7 @@ class AwarenessSession(PylinkEyetrackerSession):
             self.placeholders[(angle)] = PlaceHolder(
                 win=self.win,
                 circle_radius=self.settings["stimuli"].get("stim_size_deg"),
-                color=1,
+                color=0.5,
                 ecc=self.settings["stimuli"].get("distance_from_center"),
                 roll_dist=self.roll_dist,
                 angle=angle,
@@ -1698,9 +1698,9 @@ class AwarenessSession(PylinkEyetrackerSession):
                 ecc=self.settings["stimuli"].get("distance_from_center"),
                 roll_dist=self.roll_dist,
                 angle=angle,
-                fillcolor=1,
+                fillcolor=self.settings["window"].get("color"),
                 linewidth=monitorunittools.deg2pix(
-                    self.settings["stimuli"].get("outer_fix_linewidth"),
+                    self.settings["stimuli"].get("outer_fix_linewidth")*2,
                     self.win.monitor,
                 ),
             )
@@ -1733,8 +1733,10 @@ class AwarenessSession(PylinkEyetrackerSession):
     def create_trials(self):
         self.trial_counter = 0
         self.trials = []
+        # print('XXX')
+        # print(self.settings["stimuli"].get("awareness_instruction_image"))
         self.trials.append(
-            InstructionTrial(
+            InstructionTrial_awareness(
                 session=self,
                 trial_nr=self.trial_counter,
                 phase_durations=[np.inf],
@@ -1745,6 +1747,7 @@ class AwarenessSession(PylinkEyetrackerSession):
                 txt_position_x=self.settings["various"].get("text_position_x"),
                 txt_position_y=self.settings["various"].get("text_position_y")
                 + self.roll_dist - 1,
+                image=os.path.join(parent_dir, 'stimuli', self.settings["stimuli"].get("awareness_instruction_image")),
                 draw_each_frame=False,
             )
         )

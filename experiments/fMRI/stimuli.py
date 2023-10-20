@@ -3,7 +3,7 @@
 
 import numpy as np
 from psychopy.core import getTime
-from psychopy.visual import Line, Circle, GratingStim
+from psychopy.visual import Line, Circle, GratingStim, TextStim
 
 
 class FixationBullsEye(object):
@@ -385,6 +385,16 @@ class Highlighter(object):
             lineWidth=linewidth,
             units="deg",
         )
+        self.questionmark = TextStim(
+            win,
+            text="?",
+            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+            + np.array([0, roll_dist]),
+            color=0.5,
+            height=circle_radius / 1.4,
+            units="deg",
+        )
 
     def draw(self):
         self.circle.draw()
+        self.questionmark.draw()
