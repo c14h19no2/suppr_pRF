@@ -1723,8 +1723,6 @@ class AwarenessSession(PylinkEyetrackerSession):
         np.random.shuffle(self.seq_awareness_check)
         self.seq_awareness_check_single = [(self.angles[i]) for i in range(4)]
         np.random.shuffle(self.seq_awareness_check_single)
-        print(self.seq_awareness_check)
-        print(self.seq_awareness_check_single)
         [
             self.seq_awareness_check.append([loc])
             for loc in self.seq_awareness_check_single
