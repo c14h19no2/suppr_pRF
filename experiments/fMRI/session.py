@@ -1759,13 +1759,17 @@ class AwarenessSession(PylinkEyetrackerSession):
         )
 
         for highlighted in self.seq_awareness_check:
+            parameters = {
+                "highlighted": list(highlighted),
+            }
             self.trials.append(
                 AwarenessCheckTrial(
                     session=self,
                     trial_nr=self.trial_counter,
                     phase_durations=[np.inf],
+                    phase_names=["awareness_check"],
+                    parameters=parameters,
                     keys=self.settings["various"].get("buttons_test"),
-                    highlighted=highlighted,
                     draw_each_frame=False,
                 )
             )

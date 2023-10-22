@@ -910,17 +910,18 @@ class PingpRFTrial_train(Trial):
 
 class AwarenessCheckTrial(Trial):
     """
-    Participants are asked to answer wether the highlighted location contains the HPL of distractor or not.
+    Participants are asked to answer whether the highlighted location contains the HPL of distractor or not.
     """
 
     def __init__(
         self,
         session,
         trial_nr,
-        phase_durations=[np.inf],
+        phase_durations,
+        phase_names,
+        parameters,
         keys=None,
         txt=None,
-        highlighted=None,
         draw_each_frame=False,
         **kwargs,
     ):
@@ -928,16 +929,18 @@ class AwarenessCheckTrial(Trial):
             session,
             trial_nr,
             phase_durations,
+            phase_names,
+            parameters,
             draw_each_frame=draw_each_frame,
             **kwargs,
         )
         self.keys = keys
-        self.highlighted = highlighted
+        self.highlighted = parameters["highlighted"]
 
         # text
-        if txt is None and len(highlighted) == 2:
+        if txt is None and len(self.highlighted) == 2:
             self.txt = self.session.settings["stimuli"].get("awareness_text_paired")
-        elif txt is None and len(highlighted) == 1:
+        elif txt is None and len(self.highlighted) == 1:
             self.txt = self.session.settings["stimuli"].get("awareness_text_single")
         else:
             self.txt = txt
