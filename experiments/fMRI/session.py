@@ -1795,10 +1795,10 @@ class AwarenessSession(PylinkEyetrackerSession):
                 phase_durations=[np.inf],
                 keys=self.settings["various"].get("buttons_test"),
                 txt=self.settings["stimuli"].get("awareness_instruction_text"),
-                txt_height=self.settings["various"].get("text_height"),
-                txt_width=self.settings["various"].get("text_width"),
-                txt_position_x=self.settings["various"].get("text_position_x"),
-                txt_position_y=self.settings["various"].get("text_position_y")
+                txt_height=self.settings["various"].get("awareness_check").get("text_height"),
+                txt_width=self.settings["various"].get("awareness_check").get("text_width"),
+                txt_position_x=self.settings["various"].get("awareness_check").get("text_position_x"),
+                txt_position_y=self.settings["various"].get("awareness_check").get("text_position_y")
                 + self.roll_dist
                 - 1,
                 image=os.path.join(
@@ -1835,12 +1835,11 @@ class AwarenessSession(PylinkEyetrackerSession):
                 phase_durations=[np.inf],
                 keys=self.settings["various"].get("buttons_test"),
                 txt=self.settings["stimuli"].get("awareness_rate_instruction_text"),
-                txt_height=self.settings["various"].get("text_height"),
-                txt_width=self.settings["various"].get("text_width"),
-                txt_position_x=self.settings["various"].get("text_position_x"),
-                txt_position_y=self.settings["various"].get("text_position_y")
-                + self.roll_dist
-                - 1,
+                txt_height=self.settings["various"].get("awareness_rate").get("text_height"),
+                txt_width=self.settings["various"].get("awareness_rate").get("text_width"),
+                txt_position_x=self.settings["various"].get("awareness_rate").get("text_position_x"),
+                txt_position_y=self.settings["various"].get("awareness_rate").get("text_position_y")
+                + self.roll_dist,
                 image=os.path.join(
                     parent_dir,
                     "stimuli",

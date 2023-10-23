@@ -744,9 +744,13 @@ class RollDownTheWindowTrial(Trial):
         if events:
             for key, t in events:
                 if key == self.keys[0]:
-                    self.session.roll_dist += 0.05
+                    self.session.roll_dist += self.session.settings["design"].get(
+                        "roll_dist_step"
+                    )
                 elif key == self.keys[1]:
-                    self.session.roll_dist -= 0.05
+                    self.session.roll_dist -= self.session.settings["design"].get(
+                        "roll_dist_step"
+                    )
                 self.session.fixbullseye.circle1.pos = (0, self.session.roll_dist)
                 self.session.fixbullseye.circle2.pos = (0, self.session.roll_dist)
                 self.session.fixation_dot.outer_circle.pos = (0, self.session.roll_dist)
@@ -945,15 +949,22 @@ class AwarenessCheckTrial(Trial):
         else:
             self.txt = txt
 
-        txt_height = self.session.settings["various"].get("text_height")
-        txt_width = self.session.settings["various"].get("text_width")
-        text_position_x = self.session.settings["various"].get(
-            "text_awarenesscheck_position_x"
+        txt_height = (
+            self.session.settings["various"].get("awareness_check").get("text_height")
+        )
+        txt_width = (
+            self.session.settings["various"].get("awareness_check").get("text_width")
+        )
+        text_position_x = (
+            self.session.settings["various"]
+            .get("awareness_check")
+            .get("text_awarenesscheck_position_x")
         )
         text_position_y = (
-            self.session.settings["various"].get("text_awarenesscheck_position_y")
+            self.session.settings["various"]
+            .get("awareness_check")
+            .get("text_awarenesscheck_position_y")
             + self.session.roll_dist
-            + 2
         )
 
         self.text = TextStim(
@@ -1081,15 +1092,22 @@ class AwarenessRateTrial(Trial):
         self.txt_operation = self.session.settings["stimuli"].get(
             "awareness_text_rate_operation"
         )
-        self.txt_height = self.session.settings["various"].get("text_height")
-        self.txt_width = self.session.settings["various"].get("text_width")
-        text_position_x = self.session.settings["various"].get(
-            "text_awarenesscheck_position_x"
+        self.txt_height = (
+            self.session.settings["various"].get("awareness_rate").get("text_height")
+        )
+        self.txt_width = (
+            self.session.settings["various"].get("awareness_rate").get("text_width")
+        )
+        text_position_x = (
+            self.session.settings["various"]
+            .get("awareness_rate")
+            .get("text_awarenesscheck_position_x")
         )
         text_position_y = (
-            self.session.settings["various"].get("text_awarenesscheck_position_y")
+            self.session.settings["various"]
+            .get("awareness_rate")
+            .get("text_awarenesscheck_position_y")
             + self.session.roll_dist
-            + 2
         )
 
         self.text = TextStim(
@@ -1114,7 +1132,15 @@ class AwarenessRateTrial(Trial):
             height=self.txt_height,
             wrapWidth=self.txt_width,
             units="deg",
-            pos=[0, self.session.roll_dist],
+            pos=[
+                self.session.settings["various"]
+                .get("awareness_rate")
+                .get("text_operation_position_x"),
+                self.session.settings["various"]
+                .get("awareness_rate")
+                .get("text_operation_position_y")
+                + self.session.roll_dist,
+            ],
             font="Arial",
             alignText="center",
             anchorHoriz="center",
@@ -1175,7 +1201,9 @@ class AwarenessRateTrial(Trial):
                                 "awareness_text_rate_reset"
                             )
                     elif key == self.keys[1]:
-                        if (self.stop_confirmed == True) & (self.session.awareness_rating[self.rating_angle] > 0):
+                        if (self.stop_confirmed == True) & (
+                            self.session.awareness_rating[self.rating_angle] > 0
+                        ):
                             self.stop_trial()
                         elif self.session.awareness_rating[self.rating_angle] == 0:
                             self.txt_operation = self.session.settings["stimuli"].get(
@@ -1187,7 +1215,7 @@ class AwarenessRateTrial(Trial):
                             self.txt_operation = self.session.settings["stimuli"].get(
                                 "awareness_text_rate_confirm"
                             )
-                        
+
                 else:
                     pass
         self.parameters[self.rating_angle] = self.session.awareness_rating[
