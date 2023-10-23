@@ -1180,5 +1180,3 @@ class AwarenessRateTrial(Trial):
         self.parameters[self.rating_angle] = self.session.awareness_rating[
             self.rating_angle
         ]
-        print(self.parameters[self.rating_angle])
-        print("XXX")
