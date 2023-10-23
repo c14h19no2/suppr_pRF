@@ -1164,17 +1164,30 @@ class AwarenessRateTrial(Trial):
                                 "awareness_rate_range"
                             )[1]
                         ):
-                            self.session.awareness_rating[self.rating_angle] = 0
+                            self.session.awareness_rating[
+                                self.rating_angle
+                            ] = self.session.settings["design"].get(
+                                "awareness_rate_range"
+                            )[
+                                0
+                            ]
                             self.txt_operation = self.session.settings["stimuli"].get(
                                 "awareness_text_rate_reset"
                             )
                     elif key == self.keys[1]:
-                        if self.stop_confirmed == True:
+                        if (self.stop_confirmed == True) & (self.session.awareness_rating[self.rating_angle] > 0):
                             self.stop_trial()
-                        self.stop_confirmed = True
-                        self.txt_operation = self.session.settings["stimuli"].get(
-                            "awareness_text_rate_confirm"
-                        )
+                        elif self.session.awareness_rating[self.rating_angle] == 0:
+                            self.txt_operation = self.session.settings["stimuli"].get(
+                                "awareness_text_rate_need_operation"
+                            )
+                            self.stop_confirmed = False
+                        else:
+                            self.stop_confirmed = True
+                            self.txt_operation = self.session.settings["stimuli"].get(
+                                "awareness_text_rate_confirm"
+                            )
+                        
                 else:
                     pass
         self.parameters[self.rating_angle] = self.session.awareness_rating[

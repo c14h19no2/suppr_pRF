@@ -50,38 +50,37 @@ stimuli:
     
     Now, in the following quiz, some locations may be highlighted. If 
     you believe the HPL is more likely among the highlighted locations, 
-    press the LEFT button. Otherwise, press the right button.
+    press the LEFT button. Otherwise, press the RIGHT button.
 
     Press any button to start the quiz...
   awareness_check_instruction_image: responsebox_check_instruction.png
   awareness_rate_instruction_image: responsebox_rate_instruction.png
   awareness_text_paired: |
-    Do the highlighted locations contain the HPL of distractor? 
-    Press left button for YES and right button for NO.
+    Do the highlighted locations contain the HPL of distractor?
+
+    Press LEFT for YES and RIGHT for NO.
   awareness_text_single: |
     Is the highlighted location the HPL for distractors?
+
     Press left for YES, and right for NO.
   awareness_rate_instruction_text: |
-    In the following quiz, you will be asked to rate your confidence 
-    that the highlighted location is the HPL for distractors. 
-    On a scale of 0 to 5, how confident are you? 
-    Press LEFT button to increase your score of rating, and 
-    press RIGHT button twice to confirm.
-    If you rates exceeds 5, the rating score will be reset.
-    Press any button to start the quiz...
+    In the upcoming quiz, you'll rate your confidence that the highlighted location is the HPL for distractors on a scale of 1 to 5.
+    
+    Press the LEFT to increase your rating, and press the RIGHT twice to confirm. If your rating exceeds 5, it will be reset to 0.
+    
+    Press any button to begin the quiz.
   awareness_text_rate: |
-    On a scale of 0 to 5, how confident are you that the 
-    highlighted location is the HPL for distractors?
-    If you rates exceeds 5, the rating score will be reset.
+    On a scale of 1 to 5, how confident are you that the highlighted location is the HPL for distractors?
+    1 means you are not confident at all, and 5 means you are very confident. 0 means not rated.
+    If you rates exceeds 5, the rating score will be reset to 0.
   awareness_text_rate_operation: |
-    Please press LEFT button to increse your score of rating, 
-    and press RIGHT button to confirm.
+    Press LEFT to increse your score of rating, and press RIGHT to confirm.
+  awareness_text_rate_need_operation: |
+    The score cannot be 0! Press LEFT to increse your score of rating, and press RIGHT to confirm.
   awareness_text_rate_confirm: |
-    Please press RIGHT button again to confirm your chioce
-    and continue to the next trial. Press Left button to cancel.
+    Press RIGHT again to confirm your chioce and continue to the next trial. Press LEFT to cancel this confirmation.
   awareness_text_rate_reset: |
-    The rating for this trial has been reset! Press LEFT button
-    to increse your confidence, and press RIGHT button to confirm.
+    The rating for this trial has been reset! Press LEFT to increse your score of rating, then press RIGHT to confirm.
   outer_fix_linewidth: 0.015
   fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
@@ -111,7 +110,7 @@ design:
   supprpRF_ping_nr: 48
   supprpRF_rest_nr: 12
   supprpRF_sucker_nr: 18
-  awareness_rate_range: [0, 5]
+  awareness_rate_range: [0, 5] # 1-5, 0 means not rated
 
 various:
   text_width: 15
