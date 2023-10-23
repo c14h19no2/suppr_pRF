@@ -363,6 +363,7 @@ class Highlighter(object):
     def __init__(
         self,
         win,
+        txt,
         circle_radius,
         linecolor,
         ecc=100,
@@ -387,7 +388,7 @@ class Highlighter(object):
         )
         self.questionmark = TextStim(
             win,
-            text="?",
+            text=txt,
             pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
             + np.array([0, roll_dist]),
             color=0.5,
@@ -398,3 +399,29 @@ class Highlighter(object):
     def draw(self):
         self.circle.draw()
         self.questionmark.draw()
+
+
+class Number(object):
+    def __init__(
+        self,
+        win,
+        circle_radius,
+        ecc=100,
+        roll_dist=0,
+        angle=0,
+        number=0,
+        *args,
+        **kwargs
+    ):
+        self.number = TextStim(
+            win,
+            text=str(number),
+            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+            + np.array([0, roll_dist]),
+            color=0.5,
+            height=circle_radius / 1.4,
+            units="deg",
+        )
+
+    def draw(self):
+        self.number.draw()

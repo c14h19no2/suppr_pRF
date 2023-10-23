@@ -32,6 +32,7 @@ from stimuli import (
     CheckerboardsAdjContrast,
     PlaceHolder,
     Highlighter,
+    Number,
 )
 from trial import (
     TestTrial,
@@ -49,6 +50,7 @@ from trial import (
     PingpRFTrial_train,
     InstructionTrial_awareness,
     AwarenessCheckTrial,
+    AwarenessRateTrial,
 )
 
 rng = random.SystemRandom()
@@ -1694,10 +1696,11 @@ class AwarenessSession(PylinkEyetrackerSession):
             )
             self.placeholders[(angle)].draw()
 
-        self.highlighters = {}
+        self.highlighters_qm = {}
         for angle in self.angles:
-            self.highlighters[angle] = Highlighter(
+            self.highlighters_qm[angle] = Highlighter(
                 win=self.win,
+                txt="?",
                 circle_radius=self.settings["stimuli"].get("stim_size_deg"),
                 linecolor=1,
                 ecc=self.settings["stimuli"].get("distance_from_center"),
@@ -1705,11 +1708,51 @@ class AwarenessSession(PylinkEyetrackerSession):
                 angle=angle,
                 fillcolor=self.settings["window"].get("color"),
                 linewidth=monitorunittools.deg2pix(
-                    self.settings["stimuli"].get("outer_fix_linewidth") * 2,
+                    self.settings["stimuli"].get("outer_fix_linewidth") * 3,
+                    self.win.monitor,
+                ),
+            )
+            self.highlighters_qm[angle].draw()
+
+        self.highlighters = {}
+        for angle in self.angles:
+            self.highlighters[angle] = Highlighter(
+                win=self.win,
+                txt="",
+                circle_radius=self.settings["stimuli"].get("stim_size_deg"),
+                linecolor=1,
+                ecc=self.settings["stimuli"].get("distance_from_center"),
+                roll_dist=self.roll_dist,
+                angle=angle,
+                fillcolor=self.settings["window"].get("color"),
+                linewidth=monitorunittools.deg2pix(
+                    self.settings["stimuli"].get("outer_fix_linewidth") * 3,
                     self.win.monitor,
                 ),
             )
             self.highlighters[angle].draw()
+
+        self.rate_numbers = {}
+        for _, (angle, n) in enumerate(
+            list(
+                itertools.product(
+                    self.angles,
+                    range(
+                        self.settings["design"].get("awareness_rate_range")[0],
+                        self.settings["design"].get("awareness_rate_range")[1] + 1,
+                    ),
+                )
+            )
+        ):
+            self.rate_numbers[angle, n] = Number(
+                win=self.win,
+                circle_radius=self.settings["stimuli"].get("stim_size_deg"),
+                ecc=self.settings["stimuli"].get("distance_from_center"),
+                roll_dist=self.roll_dist,
+                angle=angle,
+                number=n,
+            )
+            self.rate_numbers[angle, n].draw()
 
         self.fsmask = Circle(
             win=self.win,
@@ -1733,6 +1776,15 @@ class AwarenessSession(PylinkEyetrackerSession):
             for loc in self.seq_awareness_check_single
         ]
 
+        self.awareness_rating = {
+            45: 0,
+            135: 0,
+            225: 0,
+            315: 0,
+        }
+        self.seq_awareness_rating = self.angles.copy()
+        np.random.shuffle(self.seq_awareness_rating)
+
     def create_trials(self):
         self.trial_counter = 0
         self.trials = []
@@ -1752,11 +1804,12 @@ class AwarenessSession(PylinkEyetrackerSession):
                 image=os.path.join(
                     parent_dir,
                     "stimuli",
-                    self.settings["stimuli"].get("awareness_instruction_image"),
+                    self.settings["stimuli"].get("awareness_check_instruction_image"),
                 ),
                 draw_each_frame=False,
             )
         )
+        self.trial_counter += 1
 
         for highlighted in self.seq_awareness_check:
             parameters = {
@@ -1774,7 +1827,50 @@ class AwarenessSession(PylinkEyetrackerSession):
                 )
             )
             self.trial_counter += 1
-        pass
+
+        self.trials.append(
+            InstructionTrial_awareness(
+                session=self,
+                trial_nr=self.trial_counter,
+                phase_durations=[np.inf],
+                keys=self.settings["various"].get("buttons_test"),
+                txt=self.settings["stimuli"].get("awareness_rate_instruction_text"),
+                txt_height=self.settings["various"].get("text_height"),
+                txt_width=self.settings["various"].get("text_width"),
+                txt_position_x=self.settings["various"].get("text_position_x"),
+                txt_position_y=self.settings["various"].get("text_position_y")
+                + self.roll_dist
+                - 1,
+                image=os.path.join(
+                    parent_dir,
+                    "stimuli",
+                    self.settings["stimuli"].get("awareness_rate_instruction_image"),
+                ),
+                draw_each_frame=False,
+            )
+        )
+        self.trial_counter += 1
+
+        for angle in self.seq_awareness_rating:
+            parameters = {
+                "angle": angle,
+                45: np.nan,
+                135: np.nan,
+                225: np.nan,
+                315: np.nan,
+            }
+            self.trials.append(
+                AwarenessRateTrial(
+                    session=self,
+                    trial_nr=self.trial_counter,
+                    phase_durations=[np.inf],
+                    phase_names=["awareness_rate"],
+                    parameters=parameters,
+                    keys=self.settings["various"].get("buttons_test"),
+                    draw_each_frame=False,
+                )
+            )
+            self.trial_counter += 1
 
     def _create_yaml_log(self):
         # every n block, use the new sequences and the new stimuli

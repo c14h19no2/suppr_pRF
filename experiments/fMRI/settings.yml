@@ -53,13 +53,35 @@ stimuli:
     press the LEFT button. Otherwise, press the right button.
 
     Press any button to start the quiz...
-  awareness_instruction_image: responsebox_instruction.png
+  awareness_check_instruction_image: responsebox_check_instruction.png
+  awareness_rate_instruction_image: responsebox_rate_instruction.png
   awareness_text_paired: |
     Do the highlighted locations contain the HPL of distractor? 
     Press left button for YES and right button for NO.
   awareness_text_single: |
-    Is the highlighted location HPL of distractor or not?
-    Press left button for YES and right button for NO.
+    Is the highlighted location the HPL for distractors?
+    Press left for YES, and right for NO.
+  awareness_rate_instruction_text: |
+    In the following quiz, you will be asked to rate your confidence 
+    that the highlighted location is the HPL for distractors. 
+    On a scale of 0 to 5, how confident are you? 
+    Press LEFT button to increse your score of rating, and 
+    press RIGHT button twice to confirm.
+    If you rates exceeds 5, the rating score will be reset.
+    Press any button to start the quiz...
+  awareness_text_rate: |
+    On a scale of 0 to 5, how confident are you that the 
+    highlighted location is the HPL for distractors?
+    If you rates exceeds 5, the rating score will be reset.
+  awareness_text_rate_operation: |
+    Please press LEFT button to increse your score of rating, 
+    and press RIGHT button to confirm.
+  awareness_text_rate_confirm: |
+    Please press RIGHT button again to confirm your chioce
+    and continue to the next trial. Press Left button to cancel.
+  awareness_text_rate_reset: |
+    The rating for this trial has been reset! Press LEFT button
+    to increse your confidence, and press RIGHT button to confirm.
   outer_fix_linewidth: 0.015
   fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
@@ -89,10 +111,11 @@ design:
   supprpRF_ping_nr: 48
   supprpRF_rest_nr: 12
   supprpRF_sucker_nr: 18
+  awareness_rate_range: [0, 5]
 
 various:
   text_width: 15
-  text_height: 0.3
+  text_height: 0.2
   text_position_x: 0
   text_position_y: 1
   instruction_image_position_x: 0

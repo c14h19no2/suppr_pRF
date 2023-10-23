@@ -977,7 +977,7 @@ class AwarenessCheckTrial(Trial):
             placeholder.draw()
 
         for angle in self.highlighted:
-            self.session.highlighters[angle].draw()
+            self.session.highlighters_qm[angle].draw()
 
         self.text.draw()
         self.session.win.flip()
@@ -1045,3 +1045,140 @@ class InstructionTrial_awareness(InstructionTrial):
         self.text.draw()
         self.instruction_picture.draw()
         self.session.win.flip()
+
+
+class AwarenessRateTrial(Trial):
+    """
+    Participants are asked to Rate the possibility of the highlighted location contains the HPL of distractor or not (0-5).
+    """
+
+    def __init__(
+        self,
+        session,
+        trial_nr,
+        phase_durations,
+        phase_names,
+        parameters,
+        keys=None,
+        txt=None,
+        draw_each_frame=False,
+        **kwargs,
+    ):
+        super().__init__(
+            session,
+            trial_nr,
+            phase_durations,
+            phase_names,
+            parameters,
+            draw_each_frame=draw_each_frame,
+            **kwargs,
+        )
+        self.keys = keys
+        self.rating_angle = parameters["angle"]
+
+        # text
+        self.txt = self.session.settings["stimuli"].get("awareness_text_rate")
+        self.txt_operation = self.session.settings["stimuli"].get(
+            "awareness_text_rate_operation"
+        )
+        self.txt_height = self.session.settings["various"].get("text_height")
+        self.txt_width = self.session.settings["various"].get("text_width")
+        text_position_x = self.session.settings["various"].get(
+            "text_awarenesscheck_position_x"
+        )
+        text_position_y = (
+            self.session.settings["various"].get("text_awarenesscheck_position_y")
+            + self.session.roll_dist
+            + 2
+        )
+
+        self.text = TextStim(
+            self.session.win,
+            self.txt,
+            height=self.txt_height,
+            wrapWidth=self.txt_width,
+            units="deg",
+            pos=[text_position_x, text_position_y],
+            font="Arial",
+            alignText="center",
+            anchorHoriz="center",
+            anchorVert="center",
+        )
+        self.text.setSize(self.txt_height)
+        self.stop_confirmed = False
+
+    def draw(self):
+        self.text_operation = TextStim(
+            self.session.win,
+            self.txt_operation,
+            height=self.txt_height,
+            wrapWidth=self.txt_width,
+            units="deg",
+            pos=[0, self.session.roll_dist],
+            font="Arial",
+            alignText="center",
+            anchorHoriz="center",
+            anchorVert="center",
+        )
+
+        self.session.fixbullseye.draw()
+        self.session.fixation_dot.draw()
+        for _, placeholder in self.session.placeholders.items():
+            placeholder.draw()
+
+        self.session.highlighters[self.rating_angle].draw()
+
+        for angle in self.session.awareness_rating.keys():
+            self.session.rate_numbers[
+                angle, self.session.awareness_rating[angle]
+            ].draw()
+
+        self.text.draw()
+        self.text_operation.draw()
+        self.session.win.flip()
+
+    def get_events(self):
+        events = Trial.get_events(self)
+        if events:
+            for key, t in events:
+                if key in self.keys:
+                    if key == self.keys[0]:
+                        if self.stop_confirmed == True:
+                            self.stop_confirmed = False
+                            self.txt_operation = self.session.settings["stimuli"].get(
+                                "awareness_text_rate_operation"
+                            )
+                        elif (self.stop_confirmed == False) & (
+                            self.session.awareness_rating[self.rating_angle]
+                            < self.session.settings["design"].get(
+                                "awareness_rate_range"
+                            )[1]
+                        ):
+                            self.session.awareness_rating[self.rating_angle] += 1
+                            self.txt_operation = self.session.settings["stimuli"].get(
+                                "awareness_text_rate_operation"
+                            )
+                        elif (self.stop_confirmed == False) & (
+                            self.session.awareness_rating[self.rating_angle]
+                            == self.session.settings["design"].get(
+                                "awareness_rate_range"
+                            )[1]
+                        ):
+                            self.session.awareness_rating[self.rating_angle] = 0
+                            self.txt_operation = self.session.settings["stimuli"].get(
+                                "awareness_text_rate_reset"
+                            )
+                    elif key == self.keys[1]:
+                        if self.stop_confirmed == True:
+                            self.stop_trial()
+                        self.stop_confirmed = True
+                        self.txt_operation = self.session.settings["stimuli"].get(
+                            "awareness_text_rate_confirm"
+                        )
+                else:
+                    pass
+        self.parameters[self.rating_angle] = self.session.awareness_rating[
+            self.rating_angle
+        ]
+        print(self.parameters[self.rating_angle])
+        print("XXX")
