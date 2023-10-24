@@ -139,6 +139,6 @@ various:
   instruction_image_position_x: 0
   instruction_image_position_y: -2.0
   instruction_image_size: [2.7794, 1.3]
-  
-  buttons_train: ['2', '4']
+  buttons_practice: ['2', '4']
+  buttons_train: ['b', 'y']
   buttons_test: ['b', 'y']  # right index finger : b; right middle finger: y

@@ -560,17 +560,22 @@ class PredSession(PylinkEyetrackerSession):
                     phase_names = ["fixation", "stimulus", "resp_overtime", "feedback"]
 
                     # setup keys
+                    if self.ses_nr == "practice":
+                        keys = self.settings["various"].get("buttons_practice")
+                    elif self.ses_nr == "train":
+                        keys = self.settings["various"].get("buttons_train")
+                    
                     if self.oris_gabors[ind_TaskTrial, 0] == 135:
-                        corr_key = self.settings["various"].get("buttons_train")[0]
+                        corr_key = keys[0]
                     elif self.oris_gabors[ind_TaskTrial, 0] == 45:
-                        corr_key = self.settings["various"].get("buttons_train")[1]
+                        corr_key = keys[1]
                     else:
                         logging.warn(
                             "Angle of target location is ",
                             self.oris_gabors[ind_TaskTrial, 0],
                         )
                         raise ValueError("target location should be 45 or 135")
-                    keys = self.settings["various"].get("buttons_train")
+                    
                     parameters["corr_key"] = corr_key
 
                     self.trials.append(
@@ -1212,7 +1217,6 @@ class PingSession(PylinkEyetrackerSession):
         """Creates all stimuli used in the experiment."""
         # create instruction text
         self.instruction_text = self.settings["stimuli"].get("instruction_text")
-        self.instruction_text = eval(f"f'{self.instruction_text}'")
 
         # Create picture locations
         self._create_locations()
@@ -1290,7 +1294,7 @@ class PingSession(PylinkEyetrackerSession):
             draw_each_frame=False,
         )
 
-        if self.ses_nr == "train":
+        if self.ses_nr in ["practice", "train"]:
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
         else:
             dummy_txt = ""
@@ -1310,7 +1314,7 @@ class PingSession(PylinkEyetrackerSession):
             draw_each_frame=False,
         )
 
-        if (not self.settings["design"].get("mri_scan")) or (self.ses_nr == "train"):
+        if (not self.settings["design"].get("mri_scan")) or (self.ses_nr in ["practice", "train"]):
             self.trials = [instruction_trial]
             self.trials.append(
                 DummyWaiterTrial(
@@ -1340,12 +1344,15 @@ class PingSession(PylinkEyetrackerSession):
         for trial_type in self.seq_trials:
             # Ping trials
             if trial_type == "PingTrial":
-                if self.ses_nr == "train":
-                    keys = self.settings["various"].get("buttons_train")
+                if self.ses_nr in ["practice", "train"]:
+                    if self.ses_nr == "practice":
+                        keys = self.settings["various"].get("buttons_practice")
+                    elif self.ses_nr == "train":
+                        keys = self.settings["various"].get("buttons_train")
                     if self.seq_ping_direction[ind_PingTrial] == 1:
-                        corr_key = self.settings["various"].get("buttons_train")[0]
+                        corr_key = keys[0]
                     elif self.seq_ping_direction[ind_PingTrial] == -1:
-                        corr_key = self.settings["various"].get("buttons_train")[1]
+                        corr_key = keys[1]
                     else:
                         raise ValueError("direction should be 1 or -1")
 
