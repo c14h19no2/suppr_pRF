@@ -1349,6 +1349,7 @@ class PingSession(PylinkEyetrackerSession):
                         keys = self.settings["various"].get("buttons_practice")
                     elif self.ses_nr == "train":
                         keys = self.settings["various"].get("buttons_train")
+                    
                     if self.seq_ping_direction[ind_PingTrial] == 1:
                         corr_key = keys[0]
                     elif self.seq_ping_direction[ind_PingTrial] == -1:
