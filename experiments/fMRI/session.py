@@ -407,9 +407,10 @@ class PredSession(PylinkEyetrackerSession):
             + self.roll_dist,
             draw_each_frame=False,
         )
+
         if self.ses_nr == "practice":
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
-        if self.ses_nr == "train" and (not self.settings["design"].get("mri_scan")):
+        elif self.ses_nr == "train" and (not self.settings["design"].get("mri_scan")):
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
         elif self.ses_nr == "train" and self.settings["design"].get("mri_scan"):
             dummy_txt = self.settings["stimuli"].get("pretrigger_text")
@@ -564,7 +565,7 @@ class PredSession(PylinkEyetrackerSession):
                         keys = self.settings["various"].get("buttons_practice")
                     elif self.ses_nr == "train":
                         keys = self.settings["various"].get("buttons_train")
-                    
+
                     if self.oris_gabors[ind_TaskTrial, 0] == 135:
                         corr_key = keys[0]
                     elif self.oris_gabors[ind_TaskTrial, 0] == 45:
@@ -575,7 +576,7 @@ class PredSession(PylinkEyetrackerSession):
                             self.oris_gabors[ind_TaskTrial, 0],
                         )
                         raise ValueError("target location should be 45 or 135")
-                    
+
                     parameters["corr_key"] = corr_key
 
                     self.trials.append(
@@ -1314,7 +1315,9 @@ class PingSession(PylinkEyetrackerSession):
             draw_each_frame=False,
         )
 
-        if (not self.settings["design"].get("mri_scan")) or (self.ses_nr in ["practice", "train"]):
+        if (not self.settings["design"].get("mri_scan")) or (
+            self.ses_nr in ["practice", "train"]
+        ):
             self.trials = [instruction_trial]
             self.trials.append(
                 DummyWaiterTrial(
@@ -1349,7 +1352,7 @@ class PingSession(PylinkEyetrackerSession):
                         keys = self.settings["various"].get("buttons_practice")
                     elif self.ses_nr == "train":
                         keys = self.settings["various"].get("buttons_train")
-                    
+
                     if self.seq_ping_direction[ind_PingTrial] == 1:
                         corr_key = keys[0]
                     elif self.seq_ping_direction[ind_PingTrial] == -1:
@@ -1803,10 +1806,18 @@ class AwarenessSession(PylinkEyetrackerSession):
                 phase_durations=[np.inf],
                 keys=self.settings["various"].get("buttons_test"),
                 txt=self.settings["stimuli"].get("awareness_instruction_text"),
-                txt_height=self.settings["various"].get("awareness_check").get("text_height"),
-                txt_width=self.settings["various"].get("awareness_check").get("text_width"),
-                txt_position_x=self.settings["various"].get("awareness_check").get("text_position_x"),
-                txt_position_y=self.settings["various"].get("awareness_check").get("text_position_y")
+                txt_height=self.settings["various"]
+                .get("awareness_check")
+                .get("text_height"),
+                txt_width=self.settings["various"]
+                .get("awareness_check")
+                .get("text_width"),
+                txt_position_x=self.settings["various"]
+                .get("awareness_check")
+                .get("text_position_x"),
+                txt_position_y=self.settings["various"]
+                .get("awareness_check")
+                .get("text_position_y")
                 + self.roll_dist
                 - 1,
                 image=os.path.join(
@@ -1843,10 +1854,18 @@ class AwarenessSession(PylinkEyetrackerSession):
                 phase_durations=[np.inf],
                 keys=self.settings["various"].get("buttons_test"),
                 txt=self.settings["stimuli"].get("awareness_rate_instruction_text"),
-                txt_height=self.settings["various"].get("awareness_rate").get("text_height"),
-                txt_width=self.settings["various"].get("awareness_rate").get("text_width"),
-                txt_position_x=self.settings["various"].get("awareness_rate").get("text_position_x"),
-                txt_position_y=self.settings["various"].get("awareness_rate").get("text_position_y")
+                txt_height=self.settings["various"]
+                .get("awareness_rate")
+                .get("text_height"),
+                txt_width=self.settings["various"]
+                .get("awareness_rate")
+                .get("text_width"),
+                txt_position_x=self.settings["various"]
+                .get("awareness_rate")
+                .get("text_position_x"),
+                txt_position_y=self.settings["various"]
+                .get("awareness_rate")
+                .get("text_position_y")
                 + self.roll_dist,
                 image=os.path.join(
                     parent_dir,
