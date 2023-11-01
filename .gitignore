@@ -5,7 +5,8 @@ slides
 experiments/online/**
 experiments/fMRI/logs/**
 experiment/fMRI/test/logs/**
-analysis/**
+analysis/online_pilot/**
+analysis/beh_pilot/**
 project/**
 *.csv
 *.docx
