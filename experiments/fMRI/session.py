@@ -388,7 +388,7 @@ class PredSession(PylinkEyetrackerSession):
         self.fsmask.draw()
 
         self.win.flip()
-        # time. sleep(5)
+        # time.sleep(5)
         self.win.flip()
 
     def create_trials(self):
@@ -1275,7 +1275,7 @@ class PingSession(PylinkEyetrackerSession):
         self.fsmask.draw()
 
         self.win.flip()
-        # time. sleep(5)
+        # time.sleep(5)
         self.win.flip()
 
     def create_trials(self):
