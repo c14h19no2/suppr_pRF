@@ -66,9 +66,11 @@ stimuli:
 
     Press LEFT for YES, and RIGHT for NO.
   awareness_rate_instruction_text: |
-    In the upcoming quiz, you'll rate how likely that the highlighted location is the HPL for distractors on a scale of 1 to 5.
-    
-    Press the LEFT to increase your rating, and press the RIGHT twice to confirm. If your rating exceeds 5, it will be reset to 0.
+    In the upcoming quiz, you'll rate how likely that the highlighted 
+    location is the HPL for distractors on a scale of 1 to 5.
+
+    Press the LEFT to increase your rating, and press the RIGHT twice 
+    to confirm. If your rating exceeds 5, it will be reset to 0.
     
     Press any button to begin the quiz.
   awareness_text_rate: |
@@ -80,9 +82,11 @@ stimuli:
   awareness_text_rate_need_operation: |
     Score cannot be 0! Press LEFT to increase your rating, and press RIGHT to confirm.
   awareness_text_rate_confirm: |
-    Press RIGHT again to confirm your choice and continue to the next trial. Press LEFT to cancel this confirmation.
+    Press RIGHT again to confirm your choice and continue to 
+    the next trial. Press LEFT to cancel this confirmation.
   awareness_text_rate_reset: |
-    The rating for this trial has been reset! Press LEFT to increse your score of rating, and then press RIGHT to confirm.
+    The rating for this trial has been reset! Press LEFT to increse 
+    your score of rating, and then press RIGHT to confirm.
   outer_fix_linewidth: 0.015
   fixation_size_deg: 0.25
   fixation_temporal_freq: 15 # hz
@@ -135,7 +139,7 @@ various:
     text_awarenesscheck_position_x: 0
     text_awarenesscheck_position_y: 2.3
     text_operation_position_x: 0
-    text_operation_position_y: -2.2
+    text_operation_position_y: -2.5
   instruction_image_position_x: 0
   instruction_image_position_y: -2.7
   instruction_image_size: [2.7794, 1.3]
