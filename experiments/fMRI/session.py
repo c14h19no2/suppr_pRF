@@ -1133,10 +1133,12 @@ class PingSession(PylinkEyetrackerSession):
 
         # Create sequence of trials
         self.nr_ping = self.settings["design"].get("pingpRF_ping_nr")
-        self.nr_rest = 0
+        self.nr_rest = self.settings["design"].get("pingpRF_rest_nr")
         self.nr_sucker = 0
+
         self.seq_trials = np.hstack(
             [
+                np.tile("RestingTrial", self.nr_rest),
                 np.tile("PingTrial", self.nr_ping),
             ]
         )
@@ -1444,9 +1446,43 @@ class PingSession(PylinkEyetrackerSession):
                         )
                     )
                 ind_PingTrial += 1
+            # Resting trials
+            elif trial_type == "RestingTrial":
+                parameters = {
+                    "trial_type": "RestingTrial",
+                }
+                if self.settings["design"].get("mri_scan"):
+                    if (self.trial_counter + 1 - self.nr_instruction_trials) % 4 != 0:
+                        last_phase_duration = self.settings["design"].get("ITI_time")
+                    else:
+                        last_phase_duration = np.inf
+                else:
+                    last_phase_duration = self.settings["design"].get("ITI_time")
+
+                phase_durations = [
+                    self.settings["design"].get("fixation_refresh_time"),
+                    self.settings["design"].get("stim_refresh_time"),
+                    last_phase_duration,
+                ]
+                phase_names = ["fixation", "stimulus", "ITI"]
+                self.trials.append(
+                    RestingTrial(
+                        session=self,
+                        trial_nr=self.trial_counter,
+                        phase_durations=phase_durations,
+                        phase_names=phase_names,
+                        parameters=parameters,
+                        keys=None,
+                        timing="seconds",
+                        verbose=self.settings["monitor"].get("verbose"),
+                        draw_each_frame=False,
+                    )
+                )
             else:
                 raise ValueError(
-                    "trial type should be PingTrial, RestingTrial or SuckerTrial"
+                    "trial type should be PingTrial, RestingTrial or SuckerTrial, but got {}".format(
+                        trial_type
+                    )
                 )
 
             self.trial_counter += 1
