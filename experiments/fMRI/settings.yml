@@ -98,7 +98,7 @@ stimuli:
   ping_contrast_highest: 1
 
 design:
-  mri_scan: False
+  mri_scan: True
   start_duration: 14.3
   end_duration: 14.3
   train_start_duration: 1.6
