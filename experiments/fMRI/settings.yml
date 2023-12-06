@@ -24,7 +24,7 @@ window:
   size: [1920, 1080]
   units: pix
   fullscr: True
-  screen: 1
+  screen: 0
   color: [-0.5, -0.5, -0.5]
 
 eyetracker:
@@ -107,13 +107,15 @@ design:
   resp_overtime: 1 # counted as incorrect if overtime in training period
   ITI_time: 2.8 # also waiting for t
   feedback_time: 0.2
+  pingpRF_ping_angle_nr: 8
   pingpRF_ping_nr: 144
-  pingpRF_rest_nr: 27 # 15%
+  pingpRF_rest_nr: 28 # 16%
   supprpRF_practice_task_nr: 48
   supprpRF_train_task_nr: 192
   supprpRF_testtrain_task_nr: 48
   supprpRF_testtrain_ping_nr: 48
   supprpRF_task_nr: 48
+  supprpRF_ping_angle_nr: 24
   supprpRF_ping_nr: 48
   supprpRF_rest_nr: 12
   supprpRF_sucker_nr: 18

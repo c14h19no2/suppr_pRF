@@ -736,7 +736,9 @@ class PredSession(PylinkEyetrackerSession):
             int(i) for i in np.linspace(45, 360 + 45, 4, endpoint=False)
         ] % np.array([360])
         self.angles_pings = [
-            int(i) for i in np.linspace(45, 360 + 45, 24, endpoint=False)
+            int(i) for i in np.linspace(45, 360 + 45, 
+                                        self.settings["design"].get("supprpRF_ping_angle_nr"), 
+                                        endpoint=False)
         ] % np.array([360])
 
     def _create_fixation(self):
@@ -1509,7 +1511,9 @@ class PingSession(PylinkEyetrackerSession):
 
     def _create_locations(self):
         self.angles_pings = [
-            int(i) for i in np.linspace(45, 360 + 45, 24, endpoint=False)
+            int(i) for i in np.linspace(45, 360 + 45, 
+                                        self.settings["design"].get("pingpRF_ping_angle_nr"), 
+                                        endpoint=False)
         ] % np.array([360])
 
     def _create_fixation(self):
