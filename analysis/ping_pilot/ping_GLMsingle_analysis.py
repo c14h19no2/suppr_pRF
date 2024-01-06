@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import argparse
 import yaml
+import logging
 from ping_GLMsingle import fit_GLMsingle
 
 parser = argparse.ArgumentParser(description="GLMsingle setup")
@@ -11,6 +12,13 @@ parser.add_argument("yml_config", default=None, nargs="?", help="yml config file
 cmd_args = parser.parse_args()
 yml_config = cmd_args.yml_config
 
+# set up logging
+logging.basicConfig(
+    filename=f"GLMsinglelogfile_{yml_config}.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
 """Exp parameters setup
 """
 if os.path.isfile(yml_config):
@@ -18,7 +26,7 @@ if os.path.isfile(yml_config):
         try:
             opt = yaml.safe_load(ymlfile)
         except yaml.YAMLError as exc:
-            print(exc)
+            logging.error(exc)
 
 design_opt = opt["EXP_opt"]["design"]
 path_opt = opt["EXP_opt"]["path"]
@@ -60,6 +68,17 @@ output_typeD_retinamap = opt["output_opt"]["output_typeD_retinamap"]
 """GLMsingle parameters setup
 """
 
+# set analysis operation
+if "operation" in opt["EXP_opt"].keys():
+    operation_opt = opt["EXP_opt"]["operation"]
+else:
+    operation_opt = None
+
 fit_GLMsingle(
-    design_opt, path_opt, GLMsingle_opt, output_typeC_retinamap, output_typeD_retinamap
+    design_opt,
+    path_opt,
+    operation_opt,
+    GLMsingle_opt,
+    output_typeC_retinamap,
+    output_typeD_retinamap,
 )

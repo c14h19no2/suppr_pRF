@@ -1,24 +1,12 @@
 import numpy as np
 import pandas as pd
-import scipy
-import scipy.stats as stats
-import scipy.io as sio
-import matplotlib.pyplot as plt
 import nibabel as nib
-from nilearn.plotting import view_img
 import math
-import os
-from os.path import join, exists, split
+from os.path import join, exists
 from pathlib import Path
-import sys
 import time
-import urllib.request
-import copy
-import warnings
-from tqdm import tqdm
-from pprint import pprint
 from bids.layout import BIDSLayout
-import glmsingle
+import logging
 from glmsingle.glmsingle import GLM_single
 
 
@@ -34,10 +22,18 @@ def save_nii(data, refdata, outputdir, filename):
     )
 
 
-def con_dm(ev_df, design_opt):
-    start_timepoint = ev_df[
-        (ev_df["trial_nr"] == 1) & (ev_df["event_type"] == "pulse")
-    ]["onset"].values[0]
+def con_dm(ev_df, design_opt, operation_opt):
+    TR_nr_from_DM = ev_df["event_type"].value_counts().pulse
+    if TR_nr_from_DM != design_opt["TR_nr"]:
+        logging.warning(
+            f'Number of TRs from DM ({TR_nr_from_DM}) is not equal to the number of TRs from design_opt ({design_opt["TR_nr"]})'
+        )
+    start_timepoint = (
+        ev_df[(ev_df["trial_nr"] == 1) & (ev_df["event_type"] == "pulse")][
+            "onset"
+        ].values[0]
+        - operation_opt["shift_TR"] * design_opt["TR"]
+    )
     # Correct the start time
     ev_df["onset"] = ev_df["onset"] - start_timepoint
     onset_df = ev_df[["onset", "angle_Ping", "ori_Ping", "direction"]][
@@ -56,7 +52,7 @@ def con_dm(ev_df, design_opt):
         ),
         dtype=int,
     )
-    for index, row in onset_df.iterrows():
+    for _, row in onset_df.iterrows():
         TR_ind = int(
             (row["onset"] - design_opt["fixation_dur"] * 10)
             / (design_opt["pseudo_TR"] * 10)
@@ -67,7 +63,7 @@ def con_dm(ev_df, design_opt):
     return dm, onset_df
 
 
-def con_dms(bids_layout, design_opt):
+def con_dms(bids_layout, design_opt, operation_opt):
     """Design matrix"""
     sub = design_opt["sub"]
     ses = design_opt["ses"]
@@ -76,8 +72,7 @@ def con_dms(bids_layout, design_opt):
     dms = []
     stim_dms = []
     for run in runs:
-        print("loading run {}".format(run))
-        print(bids_layout)
+        logging.info(f"Loading event file for run {run}")
         event_file = bids_layout.get(
             subject=sub,
             session=ses,
@@ -86,17 +81,17 @@ def con_dms(bids_layout, design_opt):
             suffix="events",
             extension="tsv",
         )[0]
-        print("Event file path: ", event_file.path)
+        logging.info(f"Event file path: {event_file.path}")
         ev_dfs.append(pd.read_csv(event_file.path, sep="\t"))
 
     for ev_df in ev_dfs:
-        dm, onset_df = con_dm(ev_df, design_opt)
+        dm, onset_df = con_dm(ev_df, design_opt, operation_opt)
         dms.append(dm)
         stim_dms.append(np.array(onset_df["angle_Ping"]))
     return dms, stim_dms
 
 
-def con_imgs(fmriprep_layout, design_opt):
+def con_imgs(fmriprep_layout, design_opt, operation_opt):
     # nifti file
     imgs = []
     sub = design_opt["sub"]
@@ -104,7 +99,7 @@ def con_imgs(fmriprep_layout, design_opt):
     runs = design_opt["runs"]
 
     for run in runs:
-        print(run)
+        logging.info(f"Loading func image for run {run}")
         nifti_file = fmriprep_layout.get(
             subject=sub,
             session=ses,
@@ -114,10 +109,10 @@ def con_imgs(fmriprep_layout, design_opt):
             suffix="bold",
             extension="nii.gz",
         )[0]
-        print("BOLD file path: ", nifti_file.path)
+        logging.info(f"BOLD file path: {nifti_file.path}")
         datvol = nib.load(nifti_file)
         imgs.append(datvol.get_fdata())
-        print(imgs[-1].shape)
+        logging.info(f"The image size of run {run} is {imgs[-1].shape}")
     return imgs
 
 
@@ -151,6 +146,7 @@ def cal_vertex_deg(betamap_all, unique_event_types):
 def fit_GLMsingle(
     design_opt,
     path_opt,
+    operation_opt,
     GLMsingle_opt,
     output_typeC_retinamap=False,
     output_typeD_retinamap=False,
@@ -163,13 +159,17 @@ def fit_GLMsingle(
     outputdir = path_opt["outputdir"]
     figuredir = path_opt["figuredir"]
 
-    print(f"directory of dataset:\n\t{datadir}\n")
-    print(f"directory to save example1 outputs:\n\t{outputdir}\n")
+    if operation_opt is None:
+        operation_opt = dict()
+        operation_opt["shift_TR"] = 0
+
+    logging.info(f"directory of dataset: {datadir}")
+    logging.info(f"directory to save outputs: {outputdir}")
 
     bids_layout = BIDSLayout(datadir_bids, validate=False)
     fmriprep_layout = BIDSLayout(datadir_fmriprep, validate=False)
-    print("BIDS data path: ", datadir_bids)
-    print("fmriprep data path: ", datadir_fmriprep)
+    logging.info(f"BIDS data path: {datadir_bids}")
+    logging.info(f"fmriprep data path: {datadir_fmriprep}")
     """Set parameters
     """
 
@@ -187,15 +187,14 @@ def fit_GLMsingle(
 
     """Load dms and images
     """
-    dms, stim_dms = con_dms(bids_layout, design_opt)
+    dms, stim_dms = con_dms(bids_layout, design_opt, operation_opt)
     stim_con_dms = np.concatenate(stim_dms)
-    imgs = con_imgs(fmriprep_layout, design_opt)
+    imgs = con_imgs(fmriprep_layout, design_opt, operation_opt)
 
     # T1 file
     T1_file = fmriprep_layout.get(
         subject=sub, session=ses, suffix="T1w", extension="nii.gz"
     )[0]
-    print(T1_file.path)
     T1vol = nib.load(T1_file)
 
     """
@@ -212,12 +211,12 @@ def fit_GLMsingle(
     glmsingle_obj = GLM_single(GLMsingle_opt)
 
     # visualize all the hyperparameters
-    pprint(glmsingle_obj.params)
+    logging.info(f"{glmsingle_obj.params}")
 
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     if not exists(outputdir):
-        print(f"running GLMsingle...")
+        logging.info(f"running GLMsingle...")
         results_glmsingle = glmsingle_obj.fit(
             dms,
             imgs,
@@ -227,7 +226,7 @@ def fit_GLMsingle(
             figuredir=str(figuredir),
         )
     else:
-        print(f"loading existing GLMsingle outputs from directory:\n\t{outputdir}")
+        logging.info(f"loading existing GLMsingle outputs from directory: {outputdir}")
 
         # load existing file outputs if they exist
         results_glmsingle = dict()
@@ -244,9 +243,11 @@ def fit_GLMsingle(
             join(outputdir, "TYPED_FITHRF_GLMDENOISE_RR.npy"), allow_pickle=True
         ).item()
 
-    elapsed_time = time.time() - start_time
+    elapsed_time = time.perf_counter() - start_time
 
-    print("\telapsed time: ", f'{time.strftime("%H:%M:%S", time.gmtime(elapsed_time))}')
+    logging.info(
+        f"Elapsed time: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}"
+    )
 
     """Save files into nifti format
     """
@@ -269,7 +270,7 @@ def fit_GLMsingle(
         suffix="boldref",
         extension="nii.gz",
     )[0]
-    print(bm_image_fn.path)
+    logging.info(f"The reference image is {bm_image_fn.path}")
     bref = nib.load(bg_image_fn)
     bmask = nib.load(bm_image_fn).get_fdata().astype(bool)
 
@@ -303,7 +304,6 @@ def fit_GLMsingle(
         # calculate type-C retinamap
         betas_typec = results_glmsingle["typec"]["betasmd"]
         betamap_typec_all = np.zeros((len(angles), np.prod(betas_typec.shape[0:3])))
-        nan_typec_mask = np.isnan(np.mean(betas_typec, axis=3))
 
         for ind, angle in enumerate(angles):
             betamap_typec_all[ind, :] = np.nanmean(
@@ -320,7 +320,6 @@ def fit_GLMsingle(
 
         betamap_typec_all = np.nan_to_num(betamap_typec_all)
         offset_typec = cal_vertex_deg(betas_typec_all_trials, stim_con_dms)
-        print(offset_typec.max(), offset_typec.min())
         offset_typec = offset_typec.reshape(R2_typec_masked.shape).copy()
 
         offset_typec_masked = np.empty_like(offset_typec)
@@ -332,7 +331,6 @@ def fit_GLMsingle(
         # calculate type-D retinamap
         betas_typed = results_glmsingle["typed"]["betasmd"]
         betamap_typed_all = np.zeros((len(angles), np.prod(betas_typed.shape[0:3])))
-        nan_typec_mask = np.isnan(np.mean(betas_typed, axis=3))
 
         for ind, angle in enumerate(angles):
             betamap_typed_all[ind, :] = np.nanmean(
@@ -349,13 +347,11 @@ def fit_GLMsingle(
 
         betamap_typed_all = np.nan_to_num(betamap_typed_all)
         offset_typed = cal_vertex_deg(betas_typed_all_trials, stim_con_dms)
-        print(offset_typed.max(), offset_typed.min())
         offset_typed = offset_typed.reshape(R2_typed_masked.shape).copy()
 
         offset_typed_masked = np.empty_like(offset_typed)
         offset_typed_masked[:] = np.nan
         offset_typed_masked[bmask] = offset_typed[bmask]
 
-        print(np.nanmax(offset_typed_masked), np.nanmin(offset_typed_masked))
         # save offset file
         save_nii(offset_typed_masked, bref, outputdir, "TYPED_retinamap.nii.gz")
