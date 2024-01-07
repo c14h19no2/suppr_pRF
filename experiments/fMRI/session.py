@@ -45,6 +45,7 @@ from trial import (
     DummyWaiterTrial,
     WaitStartTriggerTrial,
     FeedbackTrial,
+    OutroTrial,
     RollDownTheWindowTrial,
     PingpRFTrial,
     PingpRFTrial_train,
@@ -182,6 +183,8 @@ class PredSession(PylinkEyetrackerSession):
         else:
             raise ValueError("task should be 'neutral', 'bias1' or 'bias2'")
 
+        if self.nr_task < 48 or self.nr_task % 48 != 0:
+            raise ValueError("Number of task trials should be multiple of 48")
         # Create [target, distractor] pattern, each pattern includes 48 trials, 75% HPL are distractors
         self.TD_pattern = list(itertools.permutations(self.angles_gabors, 2))
         self.TD_pattern = np.tile(self.TD_pattern, (4, 1))
@@ -425,6 +428,7 @@ class PredSession(PylinkEyetrackerSession):
             session=self,
             trial_nr=0,
             phase_durations=[np.inf, self.settings["design"].get("start_duration")],
+            phase_names=["start_exp", "intro_dummy_scan"],
             txt=dummy_txt,
             draw_each_frame=False,
             txt_height=self.settings["various"].get("text_height"),
@@ -445,11 +449,12 @@ class PredSession(PylinkEyetrackerSession):
             self.trials.append(
                 DummyWaiterTrial(
                     session=self,
-                    trial_nr=1,
+                    trial_nr=0,
                     phase_durations=[
                         np.inf,
                         self.settings["design"].get("train_start_duration"),
                     ],
+                    phase_names=["start_exp", "intro_dummy_scan"],
                     txt=dummy_txt,
                     txt_height=self.settings["various"].get("text_height"),
                     txt_width=self.settings["various"].get("text_width"),
@@ -713,14 +718,14 @@ class PredSession(PylinkEyetrackerSession):
 
         if (self.ses_nr == "test") and self.settings["design"].get("mri_scan"):
             self.trials.append(
-                DummyWaiterTrial(
+                OutroTrial(
                     session=self,
                     trial_nr=self.trial_counter,
                     phase_durations=[
-                        np.inf,
                         self.settings["design"].get("end_duration"),
+                        0.10,
                     ],
-                    txt=dummy_txt,
+                    phase_names=["outro_dummy_scan", "end_exp"],
                     draw_each_frame=False,
                 )
             )
@@ -736,9 +741,13 @@ class PredSession(PylinkEyetrackerSession):
             int(i) for i in np.linspace(45, 360 + 45, 4, endpoint=False)
         ] % np.array([360])
         self.angles_pings = [
-            int(i) for i in np.linspace(45, 360 + 45, 
-                                        self.settings["design"].get("supprpRF_ping_angle_nr"), 
-                                        endpoint=False)
+            int(i)
+            for i in np.linspace(
+                45,
+                360 + 45,
+                self.settings["design"].get("supprpRF_ping_angle_nr"),
+                endpoint=False,
+            )
         ] % np.array([360])
 
     def _create_fixation(self):
@@ -1149,6 +1158,14 @@ class PingSession(PylinkEyetrackerSession):
 
         # Create Ping trials, in each trial 1 pings are displayed.
         self.seq_ping = np.empty((0, 1))
+        if self.nr_ping < len(self.angles_pings):
+            raise ValueError(
+                "Number of ping trials should be larger than the number of ping locations"
+            )
+        if self.nr_ping % len(self.angles_pings) != 0:
+            raise ValueError(
+                "Number of ping trials should be a multiple of the number of ping locations"
+            )
         for i in range(int(self.nr_ping / len(self.angles_pings))):
             self.seq_ping = np.concatenate(
                 (
@@ -1306,8 +1323,9 @@ class PingSession(PylinkEyetrackerSession):
 
         dummy_trial = DummyWaiterTrial(
             session=self,
-            trial_nr=1,
+            trial_nr=0,
             phase_durations=[np.inf, self.settings["design"].get("start_duration")],
+            phase_names=["start_exp", "intro_dummy_scan"],
             txt=dummy_txt,
             draw_each_frame=False,
         )
@@ -1331,6 +1349,7 @@ class PingSession(PylinkEyetrackerSession):
                         np.inf,
                         self.settings["design"].get("train_start_duration"),
                     ],
+                    phase_names=["start_exp", "intro_dummy_scan"],
                     txt=dummy_txt,
                     txt_height=self.settings["various"].get("text_height"),
                     txt_width=self.settings["various"].get("text_width"),
@@ -1491,14 +1510,14 @@ class PingSession(PylinkEyetrackerSession):
 
         if (self.ses_nr == "test") and self.settings["design"].get("mri_scan"):
             self.trials.append(
-                DummyWaiterTrial(
+                OutroTrial(
                     session=self,
                     trial_nr=self.trial_counter,
                     phase_durations=[
-                        np.inf,
                         self.settings["design"].get("end_duration"),
+                        0.10,
                     ],
-                    txt=dummy_txt,
+                    phase_names=["outro_dummy_scan", "end_exp"],
                     draw_each_frame=False,
                 )
             )
@@ -1511,9 +1530,13 @@ class PingSession(PylinkEyetrackerSession):
 
     def _create_locations(self):
         self.angles_pings = [
-            int(i) for i in np.linspace(45, 360 + 45, 
-                                        self.settings["design"].get("pingpRF_ping_angle_nr"), 
-                                        endpoint=False)
+            int(i)
+            for i in np.linspace(
+                45,
+                360 + 45,
+                self.settings["design"].get("pingpRF_ping_angle_nr"),
+                endpoint=False,
+            )
         ] % np.array([360])
 
     def _create_fixation(self):

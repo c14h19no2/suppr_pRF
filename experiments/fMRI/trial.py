@@ -478,6 +478,7 @@ class InstructionTrial(Trial):
         session,
         trial_nr,
         phase_durations=[np.inf],
+        phase_names=["Instruction"],
         txt=None,
         keys=None,
         txt_height=0.3,
@@ -491,6 +492,7 @@ class InstructionTrial(Trial):
             session,
             trial_nr,
             phase_durations,
+            phase_names,
             draw_each_frame=draw_each_frame,
             **kwargs,
         )
@@ -538,6 +540,7 @@ class DummyWaiterTrial(InstructionTrial):
         session,
         trial_nr,
         phase_durations=None,
+        phase_names=None,
         txt="Waiting for scanner triggers.",
         draw_each_frame=False,
         **kwargs,
@@ -546,6 +549,7 @@ class DummyWaiterTrial(InstructionTrial):
             session,
             trial_nr,
             phase_durations,
+            phase_names,
             txt,
             draw_each_frame=draw_each_frame,
             **kwargs,
@@ -579,10 +583,15 @@ class WaitStartTriggerTrial(Trial):
         session,
         trial_nr,
         phase_durations=[np.inf],
+        phase_names=["waiting_start_trigger"],
         draw_each_frame=False,
     ):
         super().__init__(
-            session, trial_nr, phase_durations, draw_each_frame=draw_each_frame
+            session,
+            trial_nr,
+            phase_durations,
+            phase_names,
+            draw_each_frame=draw_each_frame,
         )
 
     def draw(self):
@@ -596,13 +605,10 @@ class WaitStartTriggerTrial(Trial):
             for key, t in events:
                 if key == self.session.mri_trigger:
                     self.stop_phase()
-                    #####################################################
-                    ## TRIGGER HERE
-                    #####################################################
                     self.session.experiment_start_time = getTime()
 
 
-class OutroTrial(InstructionTrial):
+class OutroTrial(Trial):
     """Simple trial with only fixation cross."""
 
     def __init__(
@@ -610,26 +616,30 @@ class OutroTrial(InstructionTrial):
         session,
         trial_nr,
         phase_durations,
-        txt="",
+        phase_names,
         draw_each_frame=False,
         **kwargs,
     ):
-        txt = """"""
         super().__init__(
             session,
             trial_nr,
             phase_durations,
-            txt=txt,
+            phase_names,
             draw_each_frame=draw_each_frame,
             **kwargs,
         )
 
+    def draw(self):
+        self.session.fixbullseye.draw()
+        self.session.fixation_dot.draw()
+        self.session.win.flip()
+
     def get_events(self):
         events = Trial.get_events(self)
         if events:
-            for key, _ in events:
-                if key == "space":
-                    self.stop_phase()
+            for key, t in events:
+                if key == self.session.mri_trigger:
+                    pass
 
 
 class FeedbackTrial(Trial):
