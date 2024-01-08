@@ -6,6 +6,10 @@ import yaml
 import logging
 from ping_GLMsingle import fit_GLMsingle
 
+"""Parse arguments
+    input: yml config file
+"""
+
 parser = argparse.ArgumentParser(description="GLMsingle setup")
 parser.add_argument("yml_config", default=None, nargs="?", help="yml config file path")
 

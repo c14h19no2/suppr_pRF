@@ -24,7 +24,7 @@ def save_nii(data, refdata, outputdir, filename):
 
 def con_dm(ev_df, design_opt, operation_opt):
     TR_nr_from_DM = ev_df["event_type"].value_counts().pulse
-    if TR_nr_from_DM != design_opt["TR_nr"]:
+    if TR_nr_from_DM + design_opt["blank_TR_nr"] != design_opt["TR_nr"]:
         logging.warning(
             f'Number of TRs from DM ({TR_nr_from_DM}) is not equal to the number of TRs from design_opt ({design_opt["TR_nr"]})'
         )
