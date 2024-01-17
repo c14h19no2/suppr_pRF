@@ -30,7 +30,7 @@ def save_nii(data, refdata, outputdir, filename):
     )
 
 
-def cacl_stim_radius(stim_size, stim_center_dist):
+def calc_stim_radius(stim_size, stim_center_dist):
     """Calculate the size of the circle in angle units from visual angle units"""
     return np.degrees(np.arctan((stim_size / 2) / stim_center_dist))
 
@@ -156,12 +156,18 @@ def angle_to_stim_screen(stim_angle, angle_nr, stim_radius, oversamplingratio=9)
     )
     low_bound = np.radians((stim_angle - stim_radius) % 360)
     high_bound = np.radians((stim_angle + stim_radius) % 360)
-    stim_angle = np.radians(stim_angle % 360)
+    stim_radian = np.radians(stim_angle % 360)
     idx_low_bound = (np.abs(radians - low_bound)).argmin()
     idx_high_bound = (np.abs(radians - high_bound)).argmin()
     stim_screen = np.zeros_like(radians)
-    if high_bound < low_bound:
+    if (high_bound < low_bound) and (
+        stim_radius >= 360 / (angle_nr * oversamplingratio * 2)
+    ):
         stim_screen[idx_low_bound:] = 1
+        stim_screen[: idx_high_bound + 1] = 1
+    elif (high_bound < low_bound) and (
+        stim_radius < 360 / (angle_nr * oversamplingratio * 2)
+    ):
         stim_screen[: idx_high_bound + 1] = 1
     else:
         stim_screen[idx_low_bound : idx_high_bound + 1] = 1
@@ -178,7 +184,7 @@ def con_vonmises_dm(
 
     new_dm = np.zeros((dm.shape[0], angle_nr * oversamplingratio))
     for TR_ind in range(dm.shape[0]):
-        if dm[TR_ind, :].sum() > 0:
+        if any(dm[TR_ind, :]):
             angle = angles[np.where(dm[TR_ind, :])[0][0]]
             new_dm[TR_ind, :] = angle_to_stim_screen(
                 angle, angle_nr, stim_radius, oversamplingratio=oversamplingratio
@@ -190,7 +196,6 @@ def model_timecourse(model, dm):
     return np.dot(model.ravel(), dm.T.reshape((-1, dm.shape[0])))
 
 
-@jit(nopython=True)
 def rsq_for_model(data, model_tcs, return_yhat=False):
     """
     Parameters
@@ -310,7 +315,7 @@ def main():
     dms = con_dms(bids_layout, design_opt)
     dm = np.concatenate(dms, axis=0)
     oversamplingratio = int(72 / design_opt["angles_nr"])
-    stim_radius = cacl_stim_radius(0.7, 2)
+    stim_radius = calc_stim_radius(0.7, 2)
     new_dm = con_vonmises_dm(
         dm,
         angle_nr=design_opt["angles_nr"],
