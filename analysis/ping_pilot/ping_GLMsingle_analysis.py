@@ -54,34 +54,27 @@ path_opt["datadir_freesufer"] = Path(path_opt["datadir"], derivatives, "freesurf
 path_opt["outputdir"] = Path(
     path_opt["datadir"],
     derivatives,
-    "GLMsingle_test",
-    opt["EXP_opt"]["name"],
-    opt["EXP_opt"]["path"]["outputfolder"],
+    "GLMsingle",
+    opt["GLMsingle_opt"]["path"]["name"],
+    opt["GLMsingle_opt"]["path"]["outputfolder"],
 )
 path_opt["figuredir"] = Path(
     path_opt["datadir"],
     derivatives,
-    "GLMsingle_test",
-    opt["EXP_opt"]["name"],
-    opt["EXP_opt"]["path"]["figurefolder"],
+    "GLMsingle",
+    opt["GLMsingle_opt"]["path"]["name"],
+    opt["GLMsingle_opt"]["path"]["figurefolder"],
 )
 
 # want retinamap?
-output_typeC_retinamap = opt["output_opt"]["output_typeC_retinamap"]
-output_typeD_retinamap = opt["output_opt"]["output_typeD_retinamap"]
+output_typeC_retinamap = opt["GLMsingle_opt"]["output"]["output_typeC_retinamap"]
+output_typeD_retinamap = opt["GLMsingle_opt"]["output"]["output_typeD_retinamap"]
 """GLMsingle parameters setup
 """
-
-# set analysis operation
-if "operation" in opt["EXP_opt"].keys():
-    operation_opt = opt["EXP_opt"]["operation"]
-else:
-    operation_opt = None
 
 fit_GLMsingle(
     design_opt,
     path_opt,
-    operation_opt,
     GLMsingle_opt,
     output_typeC_retinamap,
     output_typeD_retinamap,

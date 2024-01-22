@@ -1,0 +1,45 @@
+EXP_opt:
+    design:
+        sub: '002'
+        ses: '01'
+        angles_nr: 8
+        runs: [1, 2, 3]
+        TR_nr: 409
+        blank_TR_nr: 3
+        fixation_dur: 0.4
+        stim_dur: 0.4
+        TR: 1.6 #s
+        pseudo_TR: 0.9
+    path:
+        datadir: /tank/shared/2023/dist_supp_pRF/pilot_data/
+        bids: bids_data
+        derivatives: derivatives
+
+GLMsingle_opt:
+    path:
+        name: GLMsingle_8loc_libno
+        outputfolder: GLMsingle
+        figurefolder: GLMsingle_figures
+    analysis:
+        wantlibrary: 0
+        wantglmdenoise: 1
+        wantfracridge: 1
+        wantfileoutputs: [1, 1, 1, 1]
+        wantmemoryoutputs: [1, 1, 1, 1]
+        fracs: [1., 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.005, 0.001]
+        wantmaxpolydeg: True # maxpolydeg will be set as 2 if false
+    output:
+        output_typeC_retinamap: True
+        output_typeD_retinamap: True
+
+vonmises_opt:
+    path:
+        name: vonmises-8loc
+        outputfolder: vonmises_pRF
+    oversamplingratio: 9
+
+vonmises_GLMsingle_opt:
+    path:
+        name: vonmises-GLMsingle-libno-8loc
+        outputfolder: vonmises_pRF
+    oversamplingratio: 9

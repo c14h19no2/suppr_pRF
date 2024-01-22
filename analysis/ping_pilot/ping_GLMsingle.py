@@ -22,18 +22,15 @@ def save_nii(data, refdata, outputdir, filename):
     )
 
 
-def con_dm(ev_df, design_opt, operation_opt):
+def con_dm(ev_df, design_opt):
     TR_nr_from_DM = ev_df["event_type"].value_counts().pulse
     if TR_nr_from_DM + design_opt["blank_TR_nr"] != design_opt["TR_nr"]:
         logging.warning(
             f'Number of TRs from DM ({TR_nr_from_DM}) is not equal to the number of TRs from design_opt ({design_opt["TR_nr"]})'
         )
-    start_timepoint = (
-        ev_df[(ev_df["trial_nr"] == 1) & (ev_df["event_type"] == "pulse")][
-            "onset"
-        ].values[0]
-        - operation_opt["shift_TR"] * design_opt["TR"]
-    )
+    start_timepoint = ev_df[
+        (ev_df["trial_nr"] == 1) & (ev_df["event_type"] == "pulse")
+    ]["onset"].values[0]
     # Correct the start time
     ev_df["onset"] = ev_df["onset"] - start_timepoint
     onset_df = ev_df[["onset", "angle_Ping", "ori_Ping", "direction"]][
@@ -57,13 +54,13 @@ def con_dm(ev_df, design_opt, operation_opt):
             (row["onset"] - design_opt["fixation_dur"] * 10)
             / (design_opt["pseudo_TR"] * 10)
         )
-        column_ind = design_opt["angles"].index(row["angle_Ping"])
+        column_ind = np.where(design_opt["angles"] == row["angle_Ping"])
         dm[TR_ind, column_ind] = 1
 
     return dm, onset_df
 
 
-def con_dms(bids_layout, design_opt, operation_opt):
+def con_dms(bids_layout, design_opt):
     """Design matrix"""
     sub = design_opt["sub"]
     ses = design_opt["ses"]
@@ -85,13 +82,13 @@ def con_dms(bids_layout, design_opt, operation_opt):
         ev_dfs.append(pd.read_csv(event_file.path, sep="\t"))
 
     for ev_df in ev_dfs:
-        dm, onset_df = con_dm(ev_df, design_opt, operation_opt)
+        dm, onset_df = con_dm(ev_df, design_opt)
         dms.append(dm)
         stim_dms.append(np.array(onset_df["angle_Ping"]))
     return dms, stim_dms
 
 
-def con_imgs(fmriprep_layout, design_opt, operation_opt):
+def con_imgs(fmriprep_layout, design_opt):
     # nifti file
     imgs = []
     sub = design_opt["sub"]
@@ -146,7 +143,6 @@ def cal_vertex_deg(betamap_all, unique_event_types):
 def fit_GLMsingle(
     design_opt,
     path_opt,
-    operation_opt,
     GLMsingle_opt,
     output_typeC_retinamap=False,
     output_typeD_retinamap=False,
@@ -158,10 +154,6 @@ def fit_GLMsingle(
     datadir_freesufer = path_opt["datadir_freesufer"]
     outputdir = path_opt["outputdir"]
     figuredir = path_opt["figuredir"]
-
-    if operation_opt is None:
-        operation_opt = dict()
-        operation_opt["shift_TR"] = 0
 
     logging.info(f"directory of dataset: {datadir}")
     logging.info(f"directory to save outputs: {outputdir}")
@@ -187,9 +179,9 @@ def fit_GLMsingle(
 
     """Load dms and images
     """
-    dms, stim_dms = con_dms(bids_layout, design_opt, operation_opt)
+    dms, stim_dms = con_dms(bids_layout, design_opt)
     stim_con_dms = np.concatenate(stim_dms)
-    imgs = con_imgs(fmriprep_layout, design_opt, operation_opt)
+    imgs = con_imgs(fmriprep_layout, design_opt)
 
     # T1 file
     T1_file = fmriprep_layout.get(
@@ -200,15 +192,15 @@ def fit_GLMsingle(
     """
     Do GLMsingle
     """
-    if GLMsingle_opt["wantmaxpolydeg"]:
-        GLMsingle_opt.pop("wantmaxpolydeg")
+    if GLMsingle_opt["analysis"]["wantmaxpolydeg"]:
+        GLMsingle_opt["analysis"].pop("wantmaxpolydeg")
     else:
-        GLMsingle_opt["maxpolydeg"] = [[0, 1] for _ in imgs]
-        GLMsingle_opt.pop("wantmaxpolydeg")
+        GLMsingle_opt["analysis"]["maxpolydeg"] = [[0, 1] for _ in imgs]
+        GLMsingle_opt["analysis"].pop("wantmaxpolydeg")
 
     # running python GLMsingle involves creating a GLM_single object
     # and then running the procedure using the .fit() routine
-    glmsingle_obj = GLM_single(GLMsingle_opt)
+    glmsingle_obj = GLM_single(GLMsingle_opt["analysis"])
 
     # visualize all the hyperparameters
     logging.info(f"{glmsingle_obj.params}")

@@ -70,7 +70,7 @@ def con_dm(ev_df, design_opt):
         column_ind = design_opt["angles"].index(row["angle_Ping"])
         dm[TR_ind, column_ind] = 1
 
-    return dm
+    return dm, onset_df
 
 
 def con_dms(bids_layout, design_opt):
@@ -80,6 +80,7 @@ def con_dms(bids_layout, design_opt):
     runs = design_opt["runs"]
     ev_dfs = []
     dms = []
+    stim_dms = []
     for run in runs:
         logging.info(f"Loading event file for run {run}")
         event_file = bids_layout.get(
@@ -94,9 +95,10 @@ def con_dms(bids_layout, design_opt):
         ev_dfs.append(pd.read_csv(event_file.path, sep="\t"))
 
     for ev_df in ev_dfs:
-        dm = con_dm(ev_df, design_opt)
+        dm, onset_df = con_dm(ev_df, design_opt)
         dms.append(dm)
-    return dms
+        stim_dms.append(np.array(onset_df["angle_Ping"]))
+    return dms, stim_dms
 
 
 def con_imgs(fmriprep_layout, design_opt):
@@ -142,7 +144,7 @@ def con_vonmises_grid(
         kappa_log10_range[0], [kappa_log10_range[1]], kappas_nr, endpoint=True
     )
     mugrid, kappagrid = np.meshgrid(mus, kappas)
-    mugrid, kappagrid = mugrid.flatten(), kappagrid.flatten()
+    mugrid, kappagrid = mugrid.ravel(), kappagrid.ravel()
     return (
         np.array([vm(mus, mu, kappa) for mu, kappa in zip(mugrid, kappagrid)]),
         mugrid,
@@ -252,7 +254,7 @@ def main():
 
     # set up logging
     logging.basicConfig(
-        filename=f"GLMsinglelogfile_{yml_config}.log",
+        filename=f"vonmises_pRF_logfile_{yml_config}.log",
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
@@ -265,16 +267,22 @@ def main():
                 opt = yaml.safe_load(ymlfile)
             except yaml.YAMLError as exc:
                 logging.error(exc)
+    else:
+        raise ValueError(f"YAML file {yml_config} not found")
 
     design_opt = opt["EXP_opt"]["design"]
     path_opt = opt["EXP_opt"]["path"]
+    vonmises_opt = opt["vonmises_opt"]
 
     bids_data = path_opt["bids"]
     derivatives = path_opt["derivatives"]
+    outputfolder = vonmises_opt["path"]["outputfolder"]
 
     # set exp parameters
     design_opt["runs"] = np.array(design_opt["runs"])
-    design_opt["angles"] = [*range(0, 360, int(360 / design_opt["angles_nr"]))]
+    design_opt["angles"] = np.array(
+        [*range(0, 360, int(360 / design_opt["angles_nr"]))]
+    )
     TR = design_opt["pseudo_TR"]
     design_opt["total_time"] = (
         design_opt["TR_nr"] - design_opt["blank_TR_nr"]
@@ -285,14 +293,12 @@ def main():
     path_opt["datadir_bids"] = Path(path_opt["datadir"], bids_data)
     path_opt["datadir_fmriprep"] = Path(path_opt["datadir"], derivatives, "fmriprep")
     path_opt["datadir_freesufer"] = Path(path_opt["datadir"], derivatives, "freesurfer")
-    path_opt["datadir_pRFmapping"] = Path(
-        path_opt["datadir"], derivatives, "pRFmapping"
+    path_opt["outputdir"] = Path(path_opt["datadir"], derivatives, outputfolder)
+    path_opt["outputdir_task"] = Path(
+        path_opt["datadir"], derivatives, outputfolder, vonmises_opt["path"]["name"]
     )
-    path_opt["datadir_pRFmapping_task"] = Path(
-        path_opt["datadir"], derivatives, "pRFmapping", "loc_24"
-    )
-    os.makedirs(path_opt["datadir_pRFmapping"], exist_ok=True)
-    os.makedirs(path_opt["datadir_pRFmapping_task"], exist_ok=True)
+    os.makedirs(path_opt["outputdir"], exist_ok=True)
+    os.makedirs(path_opt["outputdir_task"], exist_ok=True)
 
     # set up BIDS layout
     bids_layout = BIDSLayout(path_opt["datadir_bids"], validate=False)
@@ -312,9 +318,10 @@ def main():
 
     # set up design matrix
     print(f"Design matrix setup started at {time.ctime()}")
-    dms = con_dms(bids_layout, design_opt)
+    dms, _ = con_dms(bids_layout, design_opt)
     dm = np.concatenate(dms, axis=0)
-    oversamplingratio = int(72 / design_opt["angles_nr"])
+    # oversamplingratio = int(72 / design_opt["angles_nr"])
+    oversamplingratio = vonmises_opt["oversamplingratio"]
     stim_radius = calc_stim_radius(0.7, 2)
     new_dm = con_vonmises_dm(
         dm,
@@ -338,7 +345,9 @@ def main():
         [model_timecourse(models[i, :], new_dm) for i in range(models.shape[0])]
     )
 
-    hrf = _gamma_difference_hrf(tr=TR, oversampling=1, onset=-0.75)[np.newaxis, :]
+    hrf = _gamma_difference_hrf(tr=TR, oversampling=1, onset=-0.75)[
+        np.newaxis, :
+    ]  # onset = -0.75
 
     grid_model_timecourses_conv = sp.signal.fftconvolve(
         grid_model_timecourses, hrf, mode="full", axes=(-1)
@@ -394,17 +403,17 @@ def main():
     img_best_kappa = np.reshape(best_kappa_whole_brain, img.shape[:-1])
 
     # save result images
-    save_nii(img_rsq, bref, path_opt["datadir_pRFmapping_task"], "prf_rsq.nii.gz")
+    save_nii(img_rsq, bref, path_opt["outputdir_task"], "prf_rsq.nii.gz")
     save_nii(
         img_best_angle,
         bref,
-        path_opt["datadir_pRFmapping_task"],
+        path_opt["outputdir_task"],
         "prf_best_angle.nii.gz",
     )
     save_nii(
         img_best_kappa,
         bref,
-        path_opt["datadir_pRFmapping_task"],
+        path_opt["outputdir_task"],
         "prf_best_kappa.nii.gz",
     )
 
