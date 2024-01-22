@@ -10,6 +10,7 @@ analysis/beh_pilot/**
 project/**
 *.csv
 *.docx
+*.log
 analysis/ping_pilot/.ipynb_checkpoints/
 __pycache__
 .DS_Store
