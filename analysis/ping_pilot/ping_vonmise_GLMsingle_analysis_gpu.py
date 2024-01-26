@@ -4,7 +4,9 @@ import argparse
 import scipy as sp
 import scipy.stats as stats
 import numpy as np
-from numba import jit
+import jax.numpy as jnp
+from jax import grad, jit, vmap, pmap, random
+from jax.scipy.stats import gamma
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
@@ -16,6 +18,9 @@ from prfpy.rf import vonMises1D as vm
 from prfpy.rf import gauss1D_cart as g1d
 from scipy.ndimage import median_filter, gaussian_filter, binary_propagation
 from nilearn.glm.first_level.hemodynamic_models import _gamma_difference_hrf
+
+
+key = random.PRNGKey(1)
 
 
 def save_nii(data, refdata, outputdir, filename):
@@ -67,7 +72,7 @@ def con_dm(ev_df, design_opt):
             (row["onset"] - design_opt["fixation_dur"] * 10)
             / (design_opt["pseudo_TR"] * 10)
         )
-        column_ind = design_opt["angles"].index(row["angle_Ping"])
+        column_ind = np.where(design_opt["angles"] == row["angle_Ping"])
         dm[TR_ind, column_ind] = 1
 
     return dm, onset_df
@@ -214,25 +219,29 @@ def rsq_for_model(data, model_tcs):
         1D or 2D, model time-course for all voxels in the data
 
     """
-    dm = np.array([np.ones(data.shape[-1]), model_tcs]).T
-    betas, _, _, _ = np.linalg.lstsq(dm, data.T, rcond=None)
-    yhat = np.dot(dm, betas).T
+    dm = jnp.vstack((jnp.ones(data.shape[-1]), model_tcs)).T
+    betas, _, _, _ = jnp.linalg.lstsq(dm, data.T, rcond=None)
+    yhat = jnp.dot(dm, betas).T
     rsq = 1 - (data - yhat).var(-1) / data.var(-1)
-    return np.vstack((betas, rsq))
+    return jnp.vstack((betas, rsq))
+
+
+rsq_for_model_v = vmap(rsq_for_model, (None, 0))
 
 
 def grid_search_for_voxel(sv_tcs, grid_model_timecourses_conv, mugrid, kappagrid):
-    b_rsqs = np.array(
-        [rsq_for_model(sv_tcs, mtcs) for mtcs in grid_model_timecourses_conv]
+    b_rsqs = rsq_for_model_v(sv_tcs, grid_model_timecourses_conv) 
+
+    max_rsq_ind = jnp.argmax(b_rsqs[:, -1, :], 0)
+    best_rsq = jnp.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
+    best_angle = jnp.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
+    best_kappa = jnp.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
+    return jnp.vstack(
+        (best_rsq.T, best_angle[jnp.newaxis, :], best_kappa[jnp.newaxis, :]),
     )
 
-    max_rsq_ind = np.argmax(b_rsqs[:, -1, :], 0)
-    best_rsq = np.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
-    best_angle = np.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
-    best_kappa = np.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
-    return np.vstack(
-        (best_rsq.T, best_angle[np.newaxis, :], best_kappa[np.newaxis, :]),
-    )
+
+grid_search_for_voxel_j = jit(grid_search_for_voxel)
 
 
 def main():
@@ -268,7 +277,7 @@ def main():
 
     design_opt = opt["EXP_opt"]["design"]
     path_opt = opt["EXP_opt"]["path"]
-    vonmises_opt = opt["vonmises_opt"]
+    vonmises_opt = opt["vonmises_GLMsingle_opt"]
 
     bids_data = path_opt["bids"]
     derivatives = path_opt["derivatives"]
@@ -293,6 +302,13 @@ def main():
     path_opt["outputdir_task"] = Path(
         path_opt["datadir"], derivatives, outputfolder, vonmises_opt["path"]["name"]
     )
+    path_opt["GLMsingle"] = Path(
+        path_opt["datadir"],
+        derivatives,
+        "GLMsingle",
+        opt["GLMsingle_opt"]["path"]["name"],
+        opt["GLMsingle_opt"]["path"]["outputfolder"],
+    )
     os.makedirs(path_opt["outputdir"], exist_ok=True)
     os.makedirs(path_opt["outputdir_task"], exist_ok=True)
 
@@ -314,9 +330,13 @@ def main():
 
     # set up design matrix
     print(f"Design matrix setup started at {time.ctime()}")
-    dms, _ = con_dms(bids_layout, design_opt)
-    dm = np.concatenate(dms, axis=0)
-    # oversamplingratio = int(72 / design_opt["angles_nr"])
+    # load npy file
+    _, stim_dms = con_dms(bids_layout, design_opt)
+    stim_dm = np.concatenate(stim_dms, axis=0)
+    dm = np.zeros((stim_dm.shape[0], design_opt["angles_nr"]))
+    for TR_ind in range(stim_dm.shape[0]):
+        stim_dm_trial_angle = np.argmin(abs(stim_dm[TR_ind] - design_opt["angles"]))
+        dm[TR_ind, stim_dm_trial_angle] = 1
     oversamplingratio = vonmises_opt["oversamplingratio"]
     stim_radius = calc_stim_radius(0.7, 2)
     new_dm = con_vonmises_dm(
@@ -341,18 +361,12 @@ def main():
         [model_timecourse(models[i, :], new_dm) for i in range(models.shape[0])]
     )
 
-    hrf = _gamma_difference_hrf(tr=TR, oversampling=1, onset=-0.75)[
-        np.newaxis, :
-    ]  # onset = -0.75
-
-    grid_model_timecourses_conv = sp.signal.fftconvolve(
-        grid_model_timecourses, hrf, mode="full", axes=(-1)
-    )[..., : grid_model_timecourses.shape[-1]]
-
     # load image
     print(f"Loading images started at {time.ctime()}")
-    imgs = con_imgs(fmriprep_layout, design_opt)
-    img = np.concatenate(imgs, axis=-1)
+    TYPED_FITHRF_GLMDENOISE_RR = np.load(
+        path_opt["GLMsingle"] / "TYPED_FITHRF_GLMDENOISE_RR.npy", allow_pickle=True
+    ).item()
+    img = np.array(TYPED_FITHRF_GLMDENOISE_RR["betasmd"])
     img_rsq = np.zeros(img.shape[:-1])
     img_best_angle = np.zeros(img.shape[:-1])
     img_best_kappa = np.zeros(img.shape[:-1])
@@ -367,12 +381,12 @@ def main():
 
     start_time = time.perf_counter()
     print(f"pRF mapping started at {time.ctime()}")
-    block_size = 100
+    block_size = 2000
     block_log_freq = 20
     block_nr = int(np.ceil(np.prod(img.shape[0:-1]) / block_size))
     for block in range(block_nr):
         sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
-        beta_rsq_angle_kappa = grid_search_for_voxel(
+        beta_rsq_angle_kappa = grid_search_for_voxel_j(
             np.array(sv_tcs),
             np.array(grid_model_timecourses),
             np.array(mugrid),

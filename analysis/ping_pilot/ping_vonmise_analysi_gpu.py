@@ -4,7 +4,8 @@ import argparse
 import scipy as sp
 import scipy.stats as stats
 import numpy as np
-from numba import jit
+import jax.numpy as jnp
+from jax import grad, jit, vmap, pmap, random
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
@@ -214,25 +215,29 @@ def rsq_for_model(data, model_tcs):
         1D or 2D, model time-course for all voxels in the data
 
     """
-    dm = np.array([np.ones(data.shape[-1]), model_tcs]).T
-    betas, _, _, _ = np.linalg.lstsq(dm, data.T, rcond=None)
-    yhat = np.dot(dm, betas).T
+    dm = jnp.vstack((jnp.ones(data.shape[-1]), model_tcs)).T
+    betas, _, _, _ = jnp.linalg.lstsq(dm, data.T, rcond=None)
+    yhat = jnp.dot(dm, betas).T
     rsq = 1 - (data - yhat).var(-1) / data.var(-1)
-    return np.vstack((betas, rsq))
+    return jnp.vstack((betas, rsq))
+
+
+rsq_for_model_v = vmap(rsq_for_model, (None, 0))
 
 
 def grid_search_for_voxel(sv_tcs, grid_model_timecourses_conv, mugrid, kappagrid):
-    b_rsqs = np.array(
-        [rsq_for_model(sv_tcs, mtcs) for mtcs in grid_model_timecourses_conv]
+    b_rsqs = rsq_for_model_v(sv_tcs, grid_model_timecourses_conv)
+
+    max_rsq_ind = jnp.argmax(b_rsqs[:, -1, :], 0)
+    best_rsq = jnp.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
+    best_angle = jnp.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
+    best_kappa = jnp.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
+    return jnp.vstack(
+        (best_rsq.T, best_angle[jnp.newaxis, :], best_kappa[jnp.newaxis, :]),
     )
 
-    max_rsq_ind = np.argmax(b_rsqs[:, -1, :], 0)
-    best_rsq = np.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
-    best_angle = np.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
-    best_kappa = np.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
-    return np.vstack(
-        (best_rsq.T, best_angle[np.newaxis, :], best_kappa[np.newaxis, :]),
-    )
+
+grid_search_for_voxel_j = jit(grid_search_for_voxel)
 
 
 def main():
@@ -367,12 +372,12 @@ def main():
 
     start_time = time.perf_counter()
     print(f"pRF mapping started at {time.ctime()}")
-    block_size = 100
+    block_size = 1000
     block_log_freq = 20
     block_nr = int(np.ceil(np.prod(img.shape[0:-1]) / block_size))
     for block in range(block_nr):
         sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
-        beta_rsq_angle_kappa = grid_search_for_voxel(
+        beta_rsq_angle_kappa = grid_search_for_voxel_j(
             np.array(sv_tcs),
             np.array(grid_model_timecourses),
             np.array(mugrid),
