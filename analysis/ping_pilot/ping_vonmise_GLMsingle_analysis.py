@@ -4,7 +4,6 @@ import argparse
 import scipy as sp
 import scipy.stats as stats
 import numpy as np
-from numba import jit
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
@@ -198,7 +197,7 @@ def model_timecourse(model, dm):
     return np.dot(model.ravel(), dm.T.reshape((-1, dm.shape[0])))
 
 
-def rsq_for_model(data, model_tcs, return_yhat=False):
+def rsq_for_model(data, model_tcs):
     """
     Parameters
     ----------
@@ -214,29 +213,25 @@ def rsq_for_model(data, model_tcs, return_yhat=False):
         1D or 2D, model time-course for all voxels in the data
 
     """
-    dm = np.vstack([np.ones(data.shape[-1]), model_tcs]).T
-    betas = np.linalg.lstsq(dm, data.T, rcond=None)[0]
+    dm = np.array([np.ones(data.shape[-1]), model_tcs]).T
+    betas, _, _, _ = np.linalg.lstsq(dm, data.T, rcond=None)
     yhat = np.dot(dm, betas).T
     rsq = 1 - (data - yhat).var(-1) / data.var(-1)
-    if return_yhat:
-        return rsq, yhat
-    else:
-        return rsq
+    return np.vstack((betas, rsq))
 
 
 def grid_search_for_voxel(sv_tcs, grid_model_timecourses_conv, mugrid, kappagrid):
-    rsqs = np.array(
+    b_rsqs = np.array(
         [rsq_for_model(sv_tcs, mtcs) for mtcs in grid_model_timecourses_conv]
     )
-    best_fitting_model = np.argmax(rsqs, axis=0)
-    best_angle, best_kappa = (
-        mugrid[best_fitting_model],
-        kappagrid[best_fitting_model],
+
+    max_rsq_ind = np.argmax(b_rsqs[:, -1, :], 0)
+    best_rsq = np.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
+    best_angle = np.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
+    best_kappa = np.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
+    return np.vstack(
+        (best_rsq.T, best_angle[np.newaxis, :], best_kappa[np.newaxis, :]),
     )
-    rsq = rsq_for_model(
-        sv_tcs, grid_model_timecourses_conv[best_fitting_model], return_yhat=False
-    )
-    return rsq, best_angle, best_kappa
 
 
 def main():
@@ -368,6 +363,7 @@ def main():
 
     # Prepare the data
     img_2D = np.reshape(img, (np.prod(img.shape[0:-1]), img.shape[-1]))
+    beta_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
     rsq_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
     best_angle_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
     best_kappa_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
@@ -380,16 +376,30 @@ def main():
     block_nr = int(np.ceil(np.prod(img.shape[0:-1]) / block_size))
     for block in range(block_nr):
         sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
-        rsq, best_angle, best_kappa = grid_search_for_voxel(
-            sv_tcs, grid_model_timecourses, mugrid, kappagrid
+        beta_rsq_angle_kappa = grid_search_for_voxel(
+            np.array(sv_tcs),
+            np.array(grid_model_timecourses),
+            np.array(mugrid),
+            np.array(kappagrid),
         )
-        rsq_whole_brain[block * block_size : (block + 1) * block_size] = rsq
+        """beta_rsq_angle_kappa:
+            [0, :] - beta 0
+            [1, :] - beta 1
+            [2, :] - best rsq
+            [3, :] - best angle
+            [4, :] - best kappa"""
+        beta_whole_brain[
+            block * block_size : (block + 1) * block_size
+        ] = beta_rsq_angle_kappa[1, :]
+        rsq_whole_brain[
+            block * block_size : (block + 1) * block_size
+        ] = beta_rsq_angle_kappa[2, :]
         best_angle_whole_brain[
             block * block_size : (block + 1) * block_size
-        ] = best_angle
+        ] = beta_rsq_angle_kappa[3, :]
         best_kappa_whole_brain[
             block * block_size : (block + 1) * block_size
-        ] = best_kappa
+        ] = beta_rsq_angle_kappa[4, :]
         if (block == 0) or ((block + 1) % block_log_freq == 0):
             print(f"Processed {block + 1}/{block_nr} blocks")
             print(f"Time elapsed: {time.perf_counter()-start_time:.2f}s")
@@ -402,12 +412,14 @@ def main():
             )
             print("-" * 25)
 
+    img_betas = np.reshape(beta_whole_brain, img.shape[:-1])
     img_rsq = np.reshape(rsq_whole_brain, img.shape[:-1])
     img_best_angle = np.reshape(best_angle_whole_brain, img.shape[:-1])
     img_best_angle = np.degrees(img_best_angle)
     img_best_kappa = np.reshape(best_kappa_whole_brain, img.shape[:-1])
 
     # save result images
+    save_nii(img_betas, bref, path_opt["outputdir_task"], "prf_betas.nii.gz")
     save_nii(img_rsq, bref, path_opt["outputdir_task"], "prf_rsq.nii.gz")
     save_nii(
         img_best_angle,
