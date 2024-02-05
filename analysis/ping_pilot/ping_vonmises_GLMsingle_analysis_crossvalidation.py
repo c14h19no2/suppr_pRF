@@ -20,6 +20,7 @@ from scipy.ndimage import median_filter, gaussian_filter, binary_propagation
 from nilearn.glm.first_level.hemodynamic_models import _gamma_difference_hrf
 
 
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 key = random.PRNGKey(1)
 
 
@@ -219,6 +220,29 @@ def rsq_for_model(data, model_tcs):
         1D or 2D, model time-course for all voxels in the data
 
     """
+    dm = np.vstack((np.ones(data.shape[-1]), model_tcs)).T
+    betas, _, _, _ = np.linalg.lstsq(dm, data.T, rcond=None)
+    yhat = np.dot(dm, betas).T
+    rsq = 1 - (data - yhat).var(-1) / data.var(-1)
+    return np.append(betas, rsq)
+
+
+def rsq_for_model_jax(data, model_tcs):
+    """
+    Parameters
+    ----------
+    data : numpy.ndarray
+        1D or 2D, containing single time-course or multiple
+    model_tcs : numpy.ndarray
+        1D, containing single model time-course
+    Returns
+    -------
+    rsq : float or numpy.ndarray
+        within-set rsq for this model's GLM fit, for all voxels in the data
+    yhat : numpy.ndarray
+        1D or 2D, model time-course for all voxels in the data
+
+    """
     dm = jnp.vstack((jnp.ones(data.shape[-1]), model_tcs)).T
     betas, _, _, _ = jnp.linalg.lstsq(dm, data.T, rcond=None)
     yhat = jnp.dot(dm, betas).T
@@ -226,22 +250,159 @@ def rsq_for_model(data, model_tcs):
     return jnp.vstack((betas, rsq))
 
 
-rsq_for_model_v = vmap(rsq_for_model, (None, 0))
+rsq_for_model_v = vmap(rsq_for_model_jax, (None, 0))
+
+
+def rsq_for_model_singlestc_gpu(data, model_tcs):
+    """
+    Parameters
+    ----------
+    data : numpy.ndarray
+        1D, containing single time-course
+    model_tcs : numpy.ndarray
+        1D, containing single model time-course
+    Returns
+    -------
+    rsq : float or numpy.ndarray
+        within-set rsq for this model's GLM fit, for all voxels in the data
+    yhat : numpy.ndarray
+        1D or 2D, model time-course for all voxels in the data
+
+    """
+    dm = jnp.vstack((jnp.ones(data.shape[-1]), model_tcs)).T
+    betas, _, _, _ = jnp.linalg.lstsq(dm, data.T, rcond=None)
+    yhat = jnp.dot(dm, betas).T
+    rsq = 1 - (data - yhat).var(-1) / data.var(-1)
+    # return jnp.vstack((betas, rsq))
+    return jnp.concatenate((betas.flatten(), rsq.flatten()))
+
+
+rsq_for_model_singlestc_gpu_v = vmap(rsq_for_model_singlestc_gpu, (0, 0))
 
 
 def grid_search_for_voxel(sv_tcs, grid_model_timecourses_conv, mugrid, kappagrid):
-    b_rsqs = rsq_for_model_v(sv_tcs, grid_model_timecourses_conv) 
+    b_rsqs = rsq_for_model_v(sv_tcs, grid_model_timecourses_conv)
 
     max_rsq_ind = jnp.argmax(b_rsqs[:, -1, :], 0)
     best_rsq = jnp.array([b_rsqs[m, :, i] for i, m in enumerate(max_rsq_ind)])
     best_angle = jnp.array([mugrid[m] for _, m in enumerate(max_rsq_ind)])
     best_kappa = jnp.array([kappagrid[m] for _, m in enumerate(max_rsq_ind)])
     return jnp.vstack(
-        (best_rsq.T, best_angle[jnp.newaxis, :], best_kappa[jnp.newaxis, :]),
+        (
+            best_rsq.T,
+            best_angle[jnp.newaxis, :],
+            best_kappa[jnp.newaxis, :],
+            max_rsq_ind[jnp.newaxis, :],
+        ),
     )
 
 
 grid_search_for_voxel_j = jit(grid_search_for_voxel)
+
+
+def fit_grid_search_on_data(
+    img,
+    grid_model_timecourses,
+    mugrid,
+    kappagrid,
+    outputdir,
+    run,
+    bref,
+    block_size=2000,
+    block_log_freq=20,
+):
+    img_rsq = np.zeros(img.shape[:-1])
+    img_best_angle = np.zeros(img.shape[:-1])
+    img_best_kappa = np.zeros(img.shape[:-1])
+
+    # Prepare the data
+    img_2D = np.reshape(img, (np.prod(img.shape[0:-1]), img.shape[-1]))
+    beta_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
+    rsq_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
+    best_angle_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
+    best_kappa_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
+    best_maxind_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
+    print(f"Reshaped image shape: {img_2D.shape}")
+
+    start_time = time.perf_counter()
+    print(f"pRF mapping started at {time.ctime()}")
+    block_nr = int(np.ceil(np.prod(img.shape[0:-1]) / block_size))
+    for block in range(block_nr):
+        sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
+        beta_rsq_angle_kappa_maxind = grid_search_for_voxel_j(
+            np.array(sv_tcs),
+            np.array(grid_model_timecourses),
+            np.array(mugrid),
+            np.array(kappagrid),
+        )
+        """beta_rsq_angle_kappa_maxind:
+                [0, :] - beta 0
+                [1, :] - beta 1
+                [2, :] - best rsq
+                [3, :] - best angle
+                [4, :] - best kappa"""
+        beta_whole_brain[block * block_size : (block + 1) * block_size] = (
+            beta_rsq_angle_kappa_maxind[1, :]
+        )
+        rsq_whole_brain[block * block_size : (block + 1) * block_size] = (
+            beta_rsq_angle_kappa_maxind[2, :]
+        )
+        best_angle_whole_brain[block * block_size : (block + 1) * block_size] = (
+            beta_rsq_angle_kappa_maxind[3, :]
+        )
+        best_kappa_whole_brain[block * block_size : (block + 1) * block_size] = (
+            beta_rsq_angle_kappa_maxind[4, :]
+        )
+        best_maxind_whole_brain[block * block_size : (block + 1) * block_size] = (
+            beta_rsq_angle_kappa_maxind[5, :]
+        )
+
+        if (block == 0) or ((block + 1) % block_log_freq == 0):
+            print(f"Processed {block + 1}/{block_nr} blocks")
+            print(f"Time elapsed: {time.perf_counter()-start_time:.2f}s")
+            avarage_time_per_block = (time.perf_counter() - start_time) / (block + 1)
+            print(
+                f"Avarage time per {block_log_freq} blocks: {avarage_time_per_block * block_log_freq:.2f}s"
+            )
+            print(
+                f"Estimated time remaining: {(block_nr-block)*avarage_time_per_block/60:.2f}min"
+            )
+            print("-" * 25)
+
+    img_betas = np.reshape(beta_whole_brain, img.shape[:-1])
+    img_rsq = np.reshape(rsq_whole_brain, img.shape[:-1])
+    img_best_angle = np.reshape(best_angle_whole_brain, img.shape[:-1])
+    img_best_angle_degree = np.degrees(img_best_angle)
+    img_best_kappa = np.reshape(best_kappa_whole_brain, img.shape[:-1])
+    img_maxind = np.reshape(best_maxind_whole_brain, img.shape[:-1])
+
+    # save result images
+    save_nii(
+        img_betas,
+        bref,
+        outputdir,
+        f"prf_betas_run-{run}.nii.gz",
+    )
+    save_nii(img_rsq, bref, outputdir, f"prf_rsq_run-{run}.nii.gz")
+    save_nii(
+        img_best_angle_degree,
+        bref,
+        outputdir,
+        f"prf_best_angle_run-{run}.nii.gz",
+    )
+    save_nii(
+        img_best_kappa,
+        bref,
+        outputdir,
+        f"prf_best_kappa_run-{run}.nii.gz",
+    )
+    save_nii(
+        img_maxind,
+        bref,
+        outputdir,
+        f"prf_maxind_run-{run}.nii.gz",
+    )
+    return img_betas, img_rsq, img_best_angle, img_best_kappa, img_maxind
 
 
 def main():
@@ -258,11 +419,11 @@ def main():
     yml_config = cmd_args.yml_config
 
     # set up logging
-    logging.basicConfig(
-        filename=f"vonmises_pRF_logfile_{yml_config}.log",
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    # logging.basicConfig(
+    #     filename=f"vonmises_pRF_logfile_{yml_config}.log",
+    #     level=logging.INFO,
+    #     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    # )
 
     """Exp parameters setup
     """
@@ -330,119 +491,154 @@ def main():
 
     # set up design matrix
     print(f"Design matrix setup started at {time.ctime()}")
-    # load npy file
     _, stim_dms = con_dms(bids_layout, design_opt)
-    stim_dm = np.concatenate(stim_dms, axis=0)
-    dm = np.zeros((stim_dm.shape[0], design_opt["angles_nr"]))
-    for TR_ind in range(stim_dm.shape[0]):
-        stim_dm_trial_angle = np.argmin(abs(stim_dm[TR_ind] - design_opt["angles"]))
-        dm[TR_ind, stim_dm_trial_angle] = 1
-    oversamplingratio = vonmises_opt["oversamplingratio"]
-    stim_radius = calc_stim_radius(0.7, 2)
-    new_dm = con_vonmises_dm(
-        dm,
-        angle_nr=design_opt["angles_nr"],
-        stim_radius=stim_radius,
-        oversamplingratio=oversamplingratio,
-    )
-
-    (
-        models,
-        mugrid,
-        kappagrid,
-    ) = con_vonmises_grid(
-        angle_nr=design_opt["angles_nr"],
-        oversamplingratio=oversamplingratio,
-        kappas_nr=20,
-        kappa_range=[0.1, 50],
-    )
-
-    grid_model_timecourses = np.array(
-        [model_timecourse(models[i, :], new_dm) for i in range(models.shape[0])]
-    )
+    stim_dms_len = [stim_dm.shape[-1] for stim_dm in stim_dms]
+    stim_dms_startpoints = np.insert(np.cumsum(stim_dms_len), 0, 0)
 
     # load image
     print(f"Loading images started at {time.ctime()}")
     TYPED_FITHRF_GLMDENOISE_RR = np.load(
         path_opt["GLMsingle"] / "TYPED_FITHRF_GLMDENOISE_RR.npy", allow_pickle=True
     ).item()
-    img = np.array(TYPED_FITHRF_GLMDENOISE_RR["betasmd"])
-    img_rsq = np.zeros(img.shape[:-1])
-    img_best_angle = np.zeros(img.shape[:-1])
-    img_best_kappa = np.zeros(img.shape[:-1])
 
-    # Prepare the data
-    img_2D = np.reshape(img, (np.prod(img.shape[0:-1]), img.shape[-1]))
-    beta_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
-    rsq_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
-    best_angle_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
-    best_kappa_whole_brain = np.zeros((np.prod(img.shape[0:-1])))
-    print(f"Reshaped image shape: {img_2D.shape}")
+    imgs = []
+    for run, stim_dm in enumerate(stim_dms):
+        img_singlerun = np.array(TYPED_FITHRF_GLMDENOISE_RR["betasmd"])[
+            :, :, :, stim_dms_startpoints[run] : stim_dms_startpoints[run + 1]
+        ]
+        imgs.append(img_singlerun)
 
-    start_time = time.perf_counter()
-    print(f"pRF mapping started at {time.ctime()}")
+    # set up von mises grid
+    new_dms = []
+    angle_nr = design_opt["angles_nr"]
+    oversamplingratio = vonmises_opt["oversamplingratio"]
+    mus = np.linspace(0, 2 * np.pi, oversamplingratio * angle_nr, endpoint=False)
     block_size = 2000
     block_log_freq = 20
-    block_nr = int(np.ceil(np.prod(img.shape[0:-1]) / block_size))
-    for block in range(block_nr):
-        sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
-        beta_rsq_angle_kappa = grid_search_for_voxel_j(
-            np.array(sv_tcs),
-            np.array(grid_model_timecourses),
-            np.array(mugrid),
-            np.array(kappagrid),
+
+    for run, stim_dm in enumerate(stim_dms):
+        dm = np.zeros((stim_dm.shape[0], design_opt["angles_nr"]))
+        for TR_ind in range(stim_dm.shape[0]):
+            stim_dm_trial_angle = np.argmin(abs(stim_dm[TR_ind] - design_opt["angles"]))
+            dm[TR_ind, stim_dm_trial_angle] = 1
+        stim_radius = calc_stim_radius(0.7, 2)
+        new_dm = con_vonmises_dm(
+            dm,
+            angle_nr=design_opt["angles_nr"],
+            stim_radius=stim_radius,
+            oversamplingratio=oversamplingratio,
         )
-        """beta_rsq_angle_kappa:
-            [0, :] - beta 0
-            [1, :] - beta 1
-            [2, :] - best rsq
-            [3, :] - best angle
-            [4, :] - best kappa"""
-        beta_whole_brain[
-            block * block_size : (block + 1) * block_size
-        ] = beta_rsq_angle_kappa[1, :]
-        rsq_whole_brain[
-            block * block_size : (block + 1) * block_size
-        ] = beta_rsq_angle_kappa[2, :]
-        best_angle_whole_brain[
-            block * block_size : (block + 1) * block_size
-        ] = beta_rsq_angle_kappa[3, :]
-        best_kappa_whole_brain[
-            block * block_size : (block + 1) * block_size
-        ] = beta_rsq_angle_kappa[4, :]
-        if (block == 0) or ((block + 1) % block_log_freq == 0):
-            print(f"Processed {block + 1}/{block_nr} blocks")
-            print(f"Time elapsed: {time.perf_counter()-start_time:.2f}s")
-            avarage_time_per_block = (time.perf_counter() - start_time) / (block + 1)
-            print(
-                f"Avarage time per {block_log_freq} blocks: {avarage_time_per_block * block_log_freq:.2f}s"
-            )
-            print(
-                f"Estimated time remaining: {(block_nr-block)*avarage_time_per_block/60:.2f}min"
-            )
-            print("-" * 25)
+        new_dms.append(new_dm)
 
-    img_betas = np.reshape(beta_whole_brain, img.shape[:-1])
-    img_rsq = np.reshape(rsq_whole_brain, img.shape[:-1])
-    img_best_angle = np.reshape(best_angle_whole_brain, img.shape[:-1])
-    img_best_angle = np.degrees(img_best_angle)
-    img_best_kappa = np.reshape(best_kappa_whole_brain, img.shape[:-1])
+    for run_ind, stim_dm in enumerate(stim_dms):
+        (
+            models,
+            mugrid,
+            kappagrid,
+        ) = con_vonmises_grid(
+            angle_nr=design_opt["angles_nr"],
+            oversamplingratio=oversamplingratio,
+            kappas_nr=20,
+            kappa_range=[0.1, 50],
+        )
 
-    # save result images
-    save_nii(img_betas, bref, path_opt["outputdir_task"], "prf_betas.nii.gz")
-    save_nii(img_rsq, bref, path_opt["outputdir_task"], "prf_rsq.nii.gz")
-    save_nii(
-        img_best_angle,
-        bref,
-        path_opt["outputdir_task"],
-        "prf_best_angle.nii.gz",
-    )
-    save_nii(
-        img_best_kappa,
-        bref,
-        path_opt["outputdir_task"],
-        "prf_best_kappa.nii.gz",
-    )
+        grid_model_timecourses = np.array(
+            [
+                model_timecourse(models[i, :], new_dms[run_ind])
+                for i in range(models.shape[0])
+            ]
+        )
+        prf_maxind_fn = Path(
+            path_opt["outputdir_task"]
+            / f"prf_maxind_run-{design_opt['runs'][run_ind]}.nii.gz"
+        )
+        if prf_maxind_fn.exists():
+            print(
+                f"pRF mapping for run {design_opt['runs'][run_ind]} already done, loading the results"
+            )
+            img_maxind_nii = nib.load(prf_maxind_fn)
+            img_maxind = img_maxind_nii.get_fdata()
+        else:
+            img_betas, img_rsq, img_best_angle, img_best_kappa, img_maxind = (
+                fit_grid_search_on_data(
+                    imgs[run_ind],
+                    grid_model_timecourses,
+                    mugrid,
+                    kappagrid,
+                    path_opt["outputdir_task"],
+                    design_opt["runs"][run_ind],
+                    bref,
+                    block_size=block_size,
+                    block_log_freq=block_log_freq,
+                )
+            )
+
+        # Use the best model to fit the other two runs
+        valid_runs = np.setdiff1d(np.arange(len(design_opt["runs"])), run_ind)
+        for valid_run in valid_runs:
+            print(f"Running validtion on run: {design_opt['runs'][valid_run]}")
+            img_singlerun = imgs[valid_run]
+            img_2D = np.reshape(
+                img_singlerun,
+                (np.prod(img_singlerun.shape[0:-1]), img_singlerun.shape[-1]),
+            )
+            img_maxind_1D = np.reshape(
+                img_maxind,
+                (np.prod(img_maxind.shape[:])),
+            )
+            block_nr = int(np.ceil(np.prod(img_singlerun.shape[0:-1]) / block_size))
+            pred_beta_whole_brain = np.zeros((np.prod(img_singlerun.shape[0:-1])))
+            pred_rsq_whole_brain = np.zeros((np.prod(img_singlerun.shape[0:-1])))
+
+            for block in range(block_nr):
+                sv_tcs = img_2D[block * block_size : (block + 1) * block_size, :]
+                maxinds = img_maxind_1D[block * block_size : (block + 1) * block_size]
+
+                grid_model_timecourses = np.array(
+                    [
+                        model_timecourse(models[int(i), :], new_dms[valid_run])
+                        for i in maxinds
+                    ]
+                )
+
+                # GPU
+                b_rsqs = vmap(rsq_for_model_singlestc_gpu, in_axes=(0, 0))(
+                    sv_tcs, grid_model_timecourses
+                )
+
+                ## CPU if GPU is not available
+                # b_rsqs = np.array(
+                #     [
+                #         rsq_for_model(sv_tcs[i], grid_model_timecourses[i])
+                #         for i in range(sv_tcs.shape[0])
+                #     ]
+                # )
+
+                pred_beta_whole_brain[block * block_size : (block + 1) * block_size] = (
+                    b_rsqs.T[1, :]
+                )
+                pred_rsq_whole_brain[block * block_size : (block + 1) * block_size] = (
+                    b_rsqs.T[2, :]
+                )
+
+            pred_beta_whole_brain = np.reshape(
+                pred_beta_whole_brain, img_singlerun.shape[:-1]
+            )
+            pred_rsq_whole_brain = np.reshape(
+                pred_rsq_whole_brain, img_singlerun.shape[:-1]
+            )
+            save_nii(
+                pred_beta_whole_brain,
+                bref,
+                path_opt["outputdir_task"],
+                f"prf_betas_run-{design_opt['runs'][run_ind]}_validrun-{design_opt['runs'][valid_run]}.nii.gz",
+            )
+            save_nii(
+                pred_rsq_whole_brain,
+                bref,
+                path_opt["outputdir_task"],
+                f"prf_rsq_run-{design_opt['runs'][run_ind]}_validrun-{design_opt['runs'][valid_run]}.nii.gz",
+            )
 
 
 if __name__ == "__main__":
