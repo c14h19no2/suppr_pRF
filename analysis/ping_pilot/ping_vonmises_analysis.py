@@ -17,7 +17,7 @@ from prfpy.rf import gauss1D_cart as g1d
 from scipy.ndimage import median_filter, gaussian_filter, binary_propagation
 from nilearn.glm.first_level.hemodynamic_models import _gamma_difference_hrf
 
-
+# TODO: add psc calculation
 def save_nii(data, refdata, outputdir, filename):
     filepath = Path(outputdir, filename)
     nib.save(
