@@ -45,6 +45,7 @@ dependencies:
   - pyparallel 
   - sounddevice 
   - pygame 
-  - pysoundcard 
+  - pysoundcard
+  - psychopy-sounddevice
   - psychopy_ext 
   - psychopy
