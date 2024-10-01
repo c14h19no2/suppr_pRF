@@ -316,8 +316,8 @@ class PredSession(PylinkEyetrackerSession):
             ecc=self.settings["stimuli"].get("distance_from_center"),
             roll_dist=self.roll_dist,
             angle=0,
-            phase=0,
-            contrast=1,
+            phase=self.settings["stimuli"].get("stim_phase"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             units="deg",
         )
 
@@ -336,8 +336,8 @@ class PredSession(PylinkEyetrackerSession):
                 ecc=self.settings["stimuli"].get("distance_from_center"),
                 roll_dist=self.roll_dist,
                 angle=angle,
-                phase=0,
-                contrast=1,
+                phase=self.settings["stimuli"].get("stim_phase"),
+                contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
                 units="deg",
             )
             self.gabors[(angle, ori)].draw()
@@ -353,7 +353,7 @@ class PredSession(PylinkEyetrackerSession):
             roll_dist=self.roll_dist,
             angle=45,
             phase=0,
-            contrast=1,
+            contrast=self.settings["stimuli"].get("stim_checkboard_contrast"),
             temporal_freq=self.settings["stimuli"].get("fixation_temporal_freq"),
             units="deg",
         )
@@ -370,7 +370,7 @@ class PredSession(PylinkEyetrackerSession):
                 roll_dist=self.roll_dist,
                 angle=angle,
                 phase=0,
-                contrast=1,
+                contrast=self.settings["stimuli"].get("stim_checkboard_contrast"),
                 temporal_freq=self.settings["stimuli"].get("fixation_temporal_freq"),
                 units="deg",
             )

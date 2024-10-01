@@ -92,6 +92,9 @@ stimuli:
   fixation_temporal_freq: 15 # hz
   stim_size_deg: 0.7 # degree
   stim_spatial_freq: 5
+  stim_phase: 0
+  stim_gabor_contrast: 1
+  stim_checkboard_contrast: 1
   ping_temporal_freq: 8 # hz
   distance_from_center: 2 # degree
   ping_contrast_lowest: 0.1
