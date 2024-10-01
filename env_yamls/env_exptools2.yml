@@ -1,10 +1,12 @@
 # conda env create -n exptools2 -f exptools2-env.yml
 # pip install git+https://github.com/VU-Cog-Sci/exptools2/
+# cd exptools2
+# pip install -e .
 # pip install --index-url=https://pypi.sr-research.com sr-research-pylink
 name: exptools2
 channels:
-- defaults
 - conda-forge
+- defaults
 dependencies:
 - python=3.9
 - pip
@@ -27,7 +29,7 @@ dependencies:
 - 'requests[security]' 
 - cffi 
 - seaborn 
-- wxpython 
+- wxPython 
 - cython 
 - pyzmq 
 - pyserial 
