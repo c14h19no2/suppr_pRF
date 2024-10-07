@@ -131,6 +131,8 @@ class TaskTrial(Trial):
         parameters,
         keys,
         timing,
+        show_background_gabors=True,
+        background_gabor_angles=None,
         verbose=True,
         draw_each_frame=False,
     ):
@@ -151,6 +153,8 @@ class TaskTrial(Trial):
             * 1
             / self.session.win.monitorFramePeriod
         )  # set flickering rate for fixation dot
+        self.show_background_gabors = show_background_gabors
+        self.background_gabor_angles = background_gabor_angles
 
     def draw(self):
         if self.phase == 0:
@@ -161,11 +165,30 @@ class TaskTrial(Trial):
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.gabors[
-                (self.parameters["angle_T"], self.parameters["ori_T"])
+                (
+                    self.parameters["angle_T"],
+                    self.parameters["ori_T"],
+                    self.parameters["color_T"],
+                )
             ].draw()
-            self.session.gabors[
-                (self.parameters["angle_D"], self.parameters["ori_D"])
-            ].draw()
+            if self.parameters["angle_D"] is not None:
+                self.session.gabors[
+                    (
+                        self.parameters["angle_D"],
+                        self.parameters["ori_D"],
+                        self.parameters["color_D"],
+                    )
+                ].draw()
+
+            for bg_angle in self.background_gabor_angles:
+                self.session.gabors[
+                    (
+                        bg_angle,
+                        int((self.parameters["ori_D"] + 90) % 180),
+                        self.parameters["color_T"],
+                    )
+                ].draw()
+
             self.session.win.flip()
             self.ITI_start_time = self.session.clock.getTime()
         elif self.phase == 2:
@@ -183,7 +206,10 @@ class TaskTrial(Trial):
                     ) % 4 == 0:
                         if (key == self.session.mri_trigger) & (
                             t - self.ITI_start_time
-                            > (self.session.settings["design"].get("ITI_time") - 0.1)
+                            > (
+                                self.session.settings["design"].get("task_ITI_time")
+                                - 0.1
+                            )
                         ):
                             self.stop_phase()
 
@@ -201,6 +227,8 @@ class TaskTrial_train(TaskTrial):
         parameters,
         keys,
         timing,
+        show_background_gabors=True,
+        background_gabor_angles=None,
         verbose=True,
         draw_each_frame=False,
     ):
@@ -212,10 +240,14 @@ class TaskTrial_train(TaskTrial):
             parameters,
             keys,
             timing,
+            show_background_gabors=True,
             verbose=verbose,
             draw_each_frame=draw_each_frame,
         )
         self.key = None
+        self.resp_ahead = False
+        self.show_background_gabors = show_background_gabors
+        self.background_gabor_angles = background_gabor_angles
 
     def draw(self):
         if self.phase == 0:
@@ -225,14 +257,51 @@ class TaskTrial_train(TaskTrial):
         elif self.phase == 1:
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
+            if self.show_background_gabors:
+                for bg_angle in self.background_gabor_angles:
+                    self.session.gabors[
+                        (
+                            bg_angle,
+                            int((self.parameters["ori_D"] + 90) % 180),
+                            self.parameters["color_T"],
+                        )
+                    ].draw()
             self.session.gabors[
-                (self.parameters["angle_T"], self.parameters["ori_T"])
+                (
+                    self.parameters["angle_T"],
+                    self.parameters["ori_T"],
+                    self.parameters["color_T"],
+                )
             ].draw()
-            self.session.gabors[
-                (self.parameters["angle_D"], self.parameters["ori_D"])
-            ].draw()
+            if self.parameters["angle_D"] is not None:
+                self.session.gabors[
+                    (
+                        self.parameters["angle_D"],
+                        self.parameters["ori_D"],
+                        self.parameters["color_D"],
+                    )
+                ].draw()
+            if self.key == self.parameters["corr_key"]:
+                self.session.fixation_dot.inner_circle.color = "chartreuse"
+                self.session.resp_task[self.parameters["ind_TaskTrial"]] = True
+            elif self.key is None:
+                pass
+            else:
+                self.session.fixation_dot.inner_circle.color = "red"
             self.session.win.flip()
         elif self.phase == 2:
+            if self.resp_ahead:
+                self.stop_phase()
+            if self.key == self.parameters["corr_key"]:
+                self.session.fixation_dot.inner_circle.color = "chartreuse"
+                self.session.resp_task[self.parameters["ind_TaskTrial"]] = True
+            elif self.key is None:
+                pass
+            else:
+                self.session.fixation_dot.inner_circle.color = "red"
+            self.session.fixation_dot.inner_circle.contrast = self.session.settings[
+                "stimuli"
+            ].get("stim_gabor_contrast")
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
@@ -243,11 +312,17 @@ class TaskTrial_train(TaskTrial):
             else:
                 self.session.fixation_dot.inner_circle.color = "red"
                 self.session.resp_task[self.parameters["ind_TaskTrial"]] = False
+            self.session.fixation_dot.inner_circle.contrast = self.session.settings[
+                "stimuli"
+            ].get("stim_gabor_contrast")
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.win.flip()
             self.session.fixation_dot.inner_circle.fillColor = -1
             self.session.fixation_dot.inner_circle.lineColor = -1
+            self.session.fixation_dot.inner_circle.contrast = self.session.settings[
+                "stimuli"
+            ].get("stim_gabor_contrast")
 
     def get_events(self):
         events = super(TaskTrial, self).get_events()
@@ -259,6 +334,7 @@ class TaskTrial_train(TaskTrial):
                 for key, t in events:
                     if key in self.keys:
                         self.key = key
+                        self.resp_ahead = True
                         self.stop_phase()
 
 
@@ -302,7 +378,11 @@ class PingTrial(Trial):
             self.session.fixbullseye.draw()
             self.session.fixation_dot.draw()
             self.session.checkerboards[
-                (self.parameters["angle_Ping"], self.parameters["ori_Ping"])
+                (
+                    self.parameters["angle_Ping"],
+                    self.parameters["ori_Ping"],
+                    self.parameters["color_Ping"],
+                )
             ].draw()
             self.session.win.flip()
             self.ITI_start_time = self.session.clock.getTime()
@@ -334,7 +414,9 @@ class PingTrial(Trial):
                                 if (key == self.session.mri_trigger) & (
                                     t - self.ITI_start_time
                                     > (
-                                        self.session.settings["design"].get("ITI_time")
+                                        self.session.settings["design"].get(
+                                            "ping_ITI_time"
+                                        )
                                         - 0.1
                                     )
                                 ):
@@ -395,7 +477,10 @@ class RestingTrial(Trial):
                     ) % 4 == 0:
                         if (key == self.session.mri_trigger) & (
                             t - self.ITI_start_time
-                            > (self.session.settings["design"].get("ITI_time") - 0.1)
+                            > (
+                                self.session.settings["design"].get("ping_ITI_time")
+                                - 0.1
+                            )
                         ):
                             self.stop_phase()
 
@@ -462,7 +547,10 @@ class SuckerTrial(Trial):
                     ) % 4 == 0:
                         if (key == self.session.mri_trigger) & (
                             t - self.ITI_start_time
-                            > (self.session.settings["design"].get("ITI_time") - 0.1)
+                            > (
+                                self.session.settings["design"].get("ping_ITI_time")
+                                - 0.1
+                            )
                         ):
                             self.stop_phase()
 
@@ -827,6 +915,7 @@ class PingpRFTrial(Trial):
                     self.parameters["angle_Ping"],
                     self.parameters["ori_Ping"],
                     self.parameters["direction"],
+                    self.parameters["color_Ping"],
                 )
             ].draw()
             self.session.win.flip()
@@ -845,7 +934,10 @@ class PingpRFTrial(Trial):
                     ) % 4 == 0:
                         if (key == self.session.mri_trigger) & (
                             t - self.ITI_start_time
-                            > (self.session.settings["design"].get("ITI_time") - 0.1)
+                            > (
+                                self.session.settings["design"].get("ping_ITI_time")
+                                - 0.1
+                            )
                         ):
                             self.stop_phase()
 
@@ -891,6 +983,7 @@ class PingpRFTrial_train(Trial):
                     self.parameters["angle_Ping"],
                     self.parameters["ori_Ping"],
                     self.parameters["direction"],
+                    self.parameters["color_Ping"],
                 )
             ].draw()
             self.session.win.flip()
@@ -904,10 +997,16 @@ class PingpRFTrial_train(Trial):
             else:
                 self.session.fixation_dot.inner_circle.color = "red"
                 self.session.resp_task[self.parameters["ind_TaskTrial"]] = False
+            self.session.fixation_dot.inner_circle.contrast = self.session.settings[
+                "stimuli"
+            ].get("stim_gabor_contrast")
             self.session.fixation_dot.draw()
             self.session.win.flip()
             self.session.fixation_dot.inner_circle.fillColor = -1
             self.session.fixation_dot.inner_circle.lineColor = -1
+            self.session.fixation_dot.inner_circle.contrast = self.session.settings[
+                "stimuli"
+            ].get("stim_gabor_contrast")
 
     def get_events(self):
         events = super().get_events()
@@ -1200,13 +1299,11 @@ class AwarenessRateTrial(Trial):
                                 "awareness_rate_range"
                             )[1]
                         ):
-                            self.session.awareness_rating[
-                                self.rating_angle
-                            ] = self.session.settings["design"].get(
-                                "awareness_rate_range"
-                            )[
-                                0
-                            ]
+                            self.session.awareness_rating[self.rating_angle] = (
+                                self.session.settings["design"].get(
+                                    "awareness_rate_range"
+                                )[0]
+                            )
                             self.txt_operation = self.session.settings["stimuli"].get(
                                 "awareness_text_rate_reset"
                             )

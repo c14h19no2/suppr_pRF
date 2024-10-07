@@ -4,6 +4,110 @@
 import numpy as np
 from psychopy.core import getTime
 from psychopy.visual import Line, Circle, GratingStim, TextStim
+from psychopy.tools.colorspacetools import hsv2rgb
+
+
+# from psychopy.filters import makeGrating
+def makeGrating(res=256, color="white"):
+    onePeriodX, onePeriodY = np.mgrid[
+        0:res, 0 : 2 * np.pi : 1j * res
+    ]
+    grating = np.sin(onePeriodY - np.pi / 2)
+    # initialise a 'black' texture
+    color_grating = np.ones((res, res, 3)) * -1.0
+    # replace the blue channel with the grating
+    if color == "blue":
+        color_grating[..., -1] = grating
+    elif color == "red":
+        color_grating[..., 0] = grating
+    elif color == "green":
+        color_grating[..., 1] = grating
+    elif color == "white":
+        color_grating[..., 0] = grating
+        color_grating[..., 1] = grating
+        color_grating[..., 2] = grating
+    return color_grating
+
+
+def makeGrating_hsv(res=256, color="white"):
+    onePeriodX, onePeriodY = np.mgrid[
+        0:res, 0 : 2 * np.pi : 1j * res
+    ]
+    grating = np.sin(onePeriodY - np.pi / 2)
+    color_grating = np.ones((res, res, 3))
+    if color == "red":
+        color_grating[..., 0] = 0
+    elif color == "green":
+        color_grating[..., 0] = 120
+    elif color == "blue":
+        color_grating[..., 0] = 240
+        color_grating[..., 1] = 1
+    elif color == "white":
+        color_grating[..., 0] = 0
+        color_grating[..., 1] = 0
+    
+    color_grating[..., 2] = (grating+1)/2
+    return hsv2rgb(color_grating)
+
+    
+
+
+def make_color_sqrXsqr_grating_tex(res=256, color="white"):
+    res = 256
+    color_grating = np.ones((res, res, 3)) * -1.0
+
+    onePeriodX, onePeriodY = np.mgrid[
+        0 : 2 * np.pi : 1j * res, 0 : 2 * np.pi : 1j * res
+    ]
+    sinusoid = np.sin(onePeriodX - np.pi / 2) * np.sin(onePeriodY - np.pi / 2)
+    grating = np.where(sinusoid > 0, 1, -1)
+
+    # replace the blue channel with the grating
+    if color == "blue":
+        color_grating[..., -1] = grating
+    elif color == "red":
+        color_grating[..., 0] = grating
+    elif color == "green":
+        color_grating[..., 1] = grating
+    elif color == "white":
+        color_grating[..., 0] = grating
+        color_grating[..., 1] = grating
+        color_grating[..., 2] = grating
+    else:
+        raise ValueError("color should be 'red', 'green', 'blue', or 'white'")
+    return color_grating
+
+
+def make_color_sqrXsqr_grating_hsvtex(res=256, color="white"):
+    res = 256
+
+    color_grating = np.ones((res, res, 3))
+    if color == "red":
+        color_grating[..., 0] = 0
+        color_grating[..., 1] = 1
+        color_grating[..., 2] = 1
+    elif color == "green":
+        color_grating[..., 0] = 120
+        color_grating[..., 1] = 1
+        color_grating[..., 2] = 1
+    elif color == "blue":
+        color_grating[..., 0] = 240
+        color_grating[..., 1] = 1
+        color_grating[..., 2] = 1
+    elif color == "white":
+        color_grating[..., 0] = 0
+        color_grating[..., 1] = 0
+        color_grating[..., 2] = 1
+
+    onePeriodX, onePeriodY = np.mgrid[
+        0 : 2 * np.pi : 1j * res, 0 : 2 * np.pi : 1j * res
+    ]
+    sinusoid = np.sin(onePeriodX - np.pi / 2) * np.sin(onePeriodY - np.pi / 2)
+    grating = np.where(sinusoid > 0, 1, -1)
+    
+    color_grating[..., 2] = (grating+1)/2
+
+    return hsv2rgb(color_grating)
 
 
 class FixationBullsEye(object):
@@ -51,6 +155,7 @@ class FixationDot(object):
         circle_radius,
         dotcolor,
         linecolor,
+        contrast=1,
         cross_lindwidth=4,
         pos=[0, 0],
         edges=360,
@@ -63,6 +168,7 @@ class FixationDot(object):
         self.pos = pos
         self.beta_outer_circle = 0.5
         self.beta_inner_circle = 0.2
+        self.contrast = contrast
         self.cross_lindwidth = cross_lindwidth
 
         self.outer_circle = Circle(
@@ -73,6 +179,7 @@ class FixationDot(object):
             edges=edges,
             fillColor=self.dotcolor,
             lineColor=self.dotcolor,
+            contrast=contrast,
             *args,
             **kwargs
         )
@@ -81,6 +188,7 @@ class FixationDot(object):
             units="deg",
             start=(-circle_radius * 0.55 + pos[0], pos[1]),
             end=(circle_radius * 0.55 + pos[0], pos[1]),
+            contrast=contrast,
             lineColor=self.linecolor,
             lineWidth=self.cross_lindwidth,
         )
@@ -89,6 +197,7 @@ class FixationDot(object):
             units="deg",
             start=(0, -circle_radius * 0.55 + pos[1]),
             end=(0, circle_radius * 0.55 + pos[1]),
+            contrast=contrast,
             lineColor=self.linecolor,
             lineWidth=self.cross_lindwidth,
         )
@@ -100,6 +209,7 @@ class FixationDot(object):
             edges=edges,
             fillColor=self.dotcolor,
             lineColor=self.dotcolor,
+            contrast=contrast,
             *args,
             **kwargs
         )
@@ -119,6 +229,7 @@ class FixationDot_flk(FixationDot):
         circle_radius,
         dotcolor,
         linecolor,
+        contrast=1,
         cross_lindwidth=4,
         pos=[0, 0],
         edges=360,
@@ -130,6 +241,7 @@ class FixationDot_flk(FixationDot):
             circle_radius,
             dotcolor,
             linecolor,
+            contrast=contrast,
             cross_lindwidth=cross_lindwidth,
             pos=pos,
             edges=edges,
@@ -150,6 +262,7 @@ class FixationDot_flk(FixationDot):
             edges=edges,
             fillColor=self.dotcolor,
             lineColor=self.dotcolor,
+            contrast=contrast,
             *args,
             **kwargs
         )
@@ -174,6 +287,7 @@ class Gabors(object):
         size,
         sf,
         ori,
+        color=(1.0, 1.0, 1.0),
         ecc=100,
         roll_dist=0,
         angle=0,
@@ -183,13 +297,19 @@ class Gabors(object):
         *args,
         **kwargs
     ):
-        self.gabor = GratingStim(
+
+        grating_res = 256
+        color_grating = makeGrating_hsv(res=grating_res, color=color)
+        
+        self.colorbg = GratingStim(
             win,
-            tex="sin",
+            tex=color_grating,
             mask="raisedCos",
             size=size,
             sf=sf,
             ori=ori,
+            # color=color,
+            colorSpace="rgb",
             pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
             + np.array([0, roll_dist]),
             phase=phase,
@@ -198,9 +318,26 @@ class Gabors(object):
             *args,
             **kwargs
         )
+        # self.gabor = GratingStim(
+        #     win,
+        #     tex="sin",
+        #     mask="raisedCos",
+        #     size=size,
+        #     sf=sf,
+        #     ori=ori,
+        #     color=color,
+        #     pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+        #     + np.array([0, roll_dist]),
+        #     phase=phase,
+        #     contrast=contrast,
+        #     units=units,
+        #     *args,
+        #     **kwargs
+        # )
 
     def draw(self):
-        self.gabor.draw()
+        self.colorbg.draw()
+        # self.gabor.draw()
 
 
 class Checkerboards(object):
@@ -210,6 +347,8 @@ class Checkerboards(object):
         size,
         sf,
         ori,
+        colorswap=False,
+        color="white",
         ecc=100,
         roll_dist=0,
         angle=0,
@@ -220,33 +359,89 @@ class Checkerboards(object):
         *args,
         **kwargs
     ):
+        """
+        If colorswap is True, the checkerboards will swap between two colors.
+        If colorswap is False, the checkerboards will swap between black and white.
+        """
         self.temporal_freq = temporal_freq
         self.contrast = contrast
-        self.checkerboards = GratingStim(
-            win,
-            tex="sqrXsqr",
-            mask="raisedCos",
-            size=size,
-            sf=sf,
-            ori=ori,
-            pos=ecc * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
-            + np.array([0, roll_dist]),
-            phase=phase,
-            contrast=contrast,
-            units=units,
-            *args,
-            **kwargs
-        )
+        self.colorswap = colorswap
+        if self.colorswap:
+            color_grating_1 = make_color_sqrXsqr_grating_hsvtex(color=color[0])
+            color_grating_2 = make_color_sqrXsqr_grating_hsvtex(color=color[1])
+            self.checkerboards_1 = GratingStim(
+                win,
+                tex=color_grating_1,  # "sqrXsqr",
+                mask="raisedCos",
+                size=size,
+                sf=sf,
+                ori=ori,
+                pos=ecc
+                * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+                + np.array([0, roll_dist]),
+                phase=phase,
+                contrast=contrast,
+                units=units,
+                *args,
+                **kwargs
+            )
+            self.checkerboards_2 = GratingStim(
+                win,
+                tex=color_grating_2,  # "sqrXsqr",
+                mask="raisedCos",
+                size=size,
+                sf=sf,
+                ori=ori,
+                pos=ecc
+                * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+                + np.array([0, roll_dist]),
+                phase=phase,
+                contrast=contrast,
+                units=units,
+                *args,
+                **kwargs
+            )
+            self.checkerboards = [self.checkerboards_1, self.checkerboards_2]
+            self.checkerboard_index = int(0)
+        else:
+            color_grating = make_color_sqrXsqr_grating_tex(color=color)
+            self.checkerboards = GratingStim(
+                win,
+                tex=color_grating,  # "sqrXsqr",
+                mask="raisedCos",
+                size=size,
+                sf=sf,
+                ori=ori,
+                pos=ecc
+                * np.array([np.sin(np.radians(angle)), np.cos(np.radians(angle))])
+                + np.array([0, roll_dist]),
+                phase=phase,
+                contrast=contrast,
+                units=units,
+                *args,
+                **kwargs
+            )
         self.last_time = getTime()
 
     def draw(self):
         present_time = getTime()
-        if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
-            self.checkerboards.contrast = -self.checkerboards.contrast
-            self.checkerboards.ori += 45
-            self.last_time = present_time
-        if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
-            self.checkerboards.draw()
+        if self.colorswap:
+            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
+                self.checkerboards[self.checkerboard_index].contrast = (
+                    -self.checkerboards[self.checkerboard_index].contrast
+                )
+                self.checkerboards[self.checkerboard_index].ori += 45
+                self.checkerboard_index = int(1 - self.checkerboard_index)
+                self.last_time = present_time
+            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
+                self.checkerboards[self.checkerboard_index].draw()
+        else:
+            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
+                self.checkerboards.contrast = -self.checkerboards.contrast
+                self.checkerboards.ori += 45
+                self.last_time = present_time
+            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
+                self.checkerboards.draw()
 
 
 class CheckerboardsAdjContrast(Checkerboards):
@@ -256,6 +451,8 @@ class CheckerboardsAdjContrast(Checkerboards):
         size,
         sf,
         ori,
+        colorswap=False,
+        color="white",
         ecc=100,
         roll_dist=0,
         angle=0,
@@ -273,6 +470,8 @@ class CheckerboardsAdjContrast(Checkerboards):
             size,
             sf,
             ori,
+            colorswap,
+            color,
             ecc,
             roll_dist,
             angle,
@@ -295,32 +494,66 @@ class CheckerboardsAdjContrast(Checkerboards):
 
     def draw(self):
         present_time = getTime()
-        if (present_time - self.last_time) > 0.1:
-            self.last_time = present_time
-            self.last_time_contrast = present_time
-            self.checkerboards.contrast = self.contrast
-            self.checkerboards.draw()
-        else:
-            self.inverse = -self.inverse
-            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
-                self.checkerboards.contrast = self.inverse * (
-                    abs(self.checkerboards.contrast)
-                    + self.beta
-                    * (present_time - self.last_time_contrast)
-                    * self.direction
-                )
-                self.checkerboards.ori += 45
+        if self.colorswap:
+            if (present_time - self.last_time) > 0.1:
                 self.last_time = present_time
                 self.last_time_contrast = present_time
-            if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
-                self.checkerboards.contrast = (
-                    abs(self.checkerboards.contrast)
-                    + self.beta
-                    * (present_time - self.last_time_contrast)
-                    * self.direction
-                )
+                self.checkerboards[self.checkerboard_index].contrast = self.contrast
+                self.checkerboards[self.checkerboard_index].draw()
+            else:
+                self.inverse = -self.inverse
+                if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
+                    self.checkerboards[self.checkerboard_index].contrast = (
+                        self.inverse
+                        * (
+                            abs(self.checkerboards[self.checkerboard_index].contrast)
+                            + self.beta
+                            * (present_time - self.last_time_contrast)
+                            * self.direction
+                        )
+                    )
+                    self.checkerboards[self.checkerboard_index].ori += 45
+                    self.checkerboard_index = int(1 - self.checkerboard_index)
+                    self.last_time = present_time
+                    self.last_time_contrast = present_time
+                if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
+                    for i in range(2):
+                        self.checkerboards[i].contrast = (
+                            abs(self.checkerboards[i].contrast)
+                            + self.beta
+                            * (present_time - self.last_time_contrast)
+                            * self.direction
+                        )
+                    self.last_time_contrast = present_time
+                    self.checkerboards[self.checkerboard_index].draw()
+
+        else:
+            if (present_time - self.last_time) > 0.1:
+                self.last_time = present_time
                 self.last_time_contrast = present_time
+                self.checkerboards.contrast = self.contrast
                 self.checkerboards.draw()
+            else:
+                self.inverse = -self.inverse
+                if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 2)):
+                    self.checkerboards.contrast = self.inverse * (
+                        abs(self.checkerboards.contrast)
+                        + self.beta
+                        * (present_time - self.last_time_contrast)
+                        * self.direction
+                    )
+                    self.checkerboards.ori += 45
+                    self.last_time = present_time
+                    self.last_time_contrast = present_time
+                if (present_time - self.last_time) > (1.0 / (self.temporal_freq * 4)):
+                    self.checkerboards.contrast = (
+                        abs(self.checkerboards.contrast)
+                        + self.beta
+                        * (present_time - self.last_time_contrast)
+                        * self.direction
+                    )
+                    self.last_time_contrast = present_time
+                    self.checkerboards.draw()
 
 
 class PlaceHolder(object):

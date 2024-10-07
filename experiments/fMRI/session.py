@@ -122,7 +122,7 @@ class PredSession(PylinkEyetrackerSession):
         variables:
         self.TD_pattern:
             - used to determine the target and distractor locations
-            - each run includes 48 trials, 75% HPL are distractors
+            - each run includes 48 trials, 50% HPL are distractors
         self.TD_list:
             - used to determine the target and distractor locations
         self.oris_gabors:
@@ -183,22 +183,79 @@ class PredSession(PylinkEyetrackerSession):
         else:
             raise ValueError("task should be 'neutral', 'bias1' or 'bias2'")
 
-        if self.nr_task < 48 or self.nr_task % 48 != 0:
-            raise ValueError("Number of task trials should be multiple of 48")
-        # Create [target, distractor] pattern, each pattern includes 48 trials, 75% HPL are distractors
-        self.TD_pattern = list(itertools.permutations(self.angles_gabors, 2))
-        self.TD_pattern = np.tile(self.TD_pattern, (4, 1))
-        if self.HPL is not None:
-            for i in range(int(len(self.TD_pattern) / 2)):
-                if self.TD_pattern[i, 0] == self.HPL:
-                    tmp = deepcopy(self.TD_pattern[i, 0])
-                    self.TD_pattern[i, 0] = self.TD_pattern[i, 1]
-                    self.TD_pattern[i, 1] = tmp
+        # if self.nr_task < 42 or self.nr_task % 42 != 0:
+        #     raise ValueError("Number of task trials should be multiple of 42, but got ", self.nr_task)
+        # # Create [target, distractor] pattern, each pattern includes 48 trials, 75% HPL are distractors
+        # self.TD_pattern = list(itertools.permutations(self.angles_task_gabors, 2))
+        # self.TD_pattern = np.tile(self.TD_pattern, (2, 1))
+        # if self.HPL is not None:
+        #     for i in range(int(len(self.TD_pattern) / 2)):
+        #         if self.TD_pattern[i, 0] == self.HPL:
+        #             tmp = deepcopy(self.TD_pattern[i, 0])
+        #             self.TD_pattern[i, 0] = self.TD_pattern[i, 1]
+        #             self.TD_pattern[i, 1] = tmp
 
+        # self.TD_list = np.tile(
+        #     self.TD_pattern, (int(self.nr_task / len(self.TD_pattern)), 1)
+        # )
+        # np.random.shuffle(self.TD_list)
+
+        # Create [target, distractor] list
+        self.TD_pattern = list(itertools.permutations(self.angles_task_gabors, 2))
+        self.TD_pattern_HPL = np.array(
+            [(angle, self.HPL) for angle in self.angles_task_gabors if angle != self.HPL]
+        )
+        self.TD_pattern_HPL = np.tile(
+            self.TD_pattern_HPL, (len(self.angles_task_gabors) - 1, 1)
+        )
+        self.TD_pattern_HPL_additional = np.array(
+            [(self.HPL, angle) for angle in self.angles_task_gabors if angle != self.HPL]
+        )
+        self.TD_pattern_HPL = np.vstack(
+            (self.TD_pattern_HPL, self.TD_pattern_HPL_additional)
+        )
+
+        if self.HPL is None:
+            self.TD_pattern = np.tile(self.TD_pattern, (2, 1))
+        elif self.HPL is not None:
+            self.TD_pattern = np.vstack((self.TD_pattern, self.TD_pattern_HPL))
+        if self.nr_task % len(self.TD_pattern) != 0:
+            raise ValueError(
+                f"Number of task trials should be multiple of {len(self.TD_pattern)}, but got {self.nr_task}"
+            )
         self.TD_list = np.tile(
             self.TD_pattern, (int(self.nr_task / len(self.TD_pattern)), 1)
         )
         np.random.shuffle(self.TD_list)
+        print(self.TD_list)
+        print("length of TD_pattern: ", self.TD_pattern.shape)
+        print("length of TD_list: ", self.TD_list.shape)
+
+        # Create color of gabors, can be perpendicular or tilted
+        self.color_gabors = np.empty((self.nr_task, 2), dtype=object)
+        colors_gabors_list_tt = np.hstack(
+            [
+                np.repeat([self.color_1], int(self.color_gabors.shape[0] / 2)),
+                np.repeat(
+                    [self.color_2],
+                    self.color_gabors.shape[0] - int(self.color_gabors.shape[0] / 2),
+                ),
+            ]
+        )
+        colors_gabors_list_pp = np.hstack(
+            [
+                np.repeat([self.color_2], int(self.color_gabors.shape[0] / 2)),
+                np.repeat(
+                    [self.color_1],
+                    self.color_gabors.shape[0] - int(self.color_gabors.shape[0] / 2),
+                ),
+            ]
+        )
+
+        self.color_gabors[:, 0] = colors_gabors_list_tt
+        self.color_gabors[:, 1] = colors_gabors_list_pp
+        # shuffle the color list along the first axis
+        np.random.shuffle(self.color_gabors)
 
         # Create oritentation of gabors, can be perpendicular or tilted
         self.oris_gabors = np.empty((self.nr_task, 2))
@@ -222,7 +279,7 @@ class PredSession(PylinkEyetrackerSession):
         self.oris_gabors[:, 0] = deepcopy(oris_gabors_list_tt)
         np.random.shuffle(oris_gabors_list_pp)
         self.oris_gabors[:, 1] = deepcopy(oris_gabors_list_pp)
-
+        self.oris_gabors = self.oris_gabors.astype(int)
         # for i in range(len(self.TD_list)):
         #     self.oris_gabors[i, 0] = rng.choice([45, 135])
         #     self.oris_gabors[i, 1] = rng.choice([0, 180])
@@ -246,6 +303,38 @@ class PredSession(PylinkEyetrackerSession):
             ]
         )
         np.random.shuffle(self.oris_pings)
+
+        if not self.settings["stimuli"].get("ping_swap_color"):
+            self.colors_Ping = np.hstack(
+                [
+                    np.repeat("white", int(self.seq_ping.shape[0])),
+                ]
+            )
+        else:
+            self.colors_Ping = np.hstack(
+                [
+                    np.repeat(0, int(self.seq_ping.shape[0] / 2)),
+                    np.repeat(
+                        1, self.seq_ping.shape[0] - int(self.seq_ping.shape[0] / 2)
+                    ),
+                ]
+            )
+        np.random.shuffle(self.colors_Ping)
+
+        # pings_paralist = np.array(list(
+        #         itertools.product(
+        #             self.angles_pings, np.array([0, 45,]).astype(int), np.array([0, 1,]).astype(int)
+        #         )
+        #     ))
+        # print(self.angles_pings)
+        # if self.nr_ping % len(pings_paralist) != 0:
+        #     raise ValueError(f"Number of ping trials should be multiple of {len(pings_paralist)}, but got ", self.nr_ping)
+        # pings_paralist = np.repeat(pings_paralist, int(self.nr_ping / len(pings_paralist)), axis=0)
+        # np.random.shuffle(pings_paralist)
+        # self.seq_ping = [[i] for i in pings_paralist[:, 0]]
+        # self.oris_pings = pings_paralist[:, 1]
+        # self.colors_Ping = pings_paralist[:, 2]
+        print(self.colors_Ping)
 
     def _create_ping_pairs(self):
         """
@@ -290,7 +379,7 @@ class PredSession(PylinkEyetrackerSession):
                     logging.warn("Time out, re-run it")
                     break
 
-        ping_pairs = ping_pairs.astype(int)
+        # ping_pairs = ping_pairs.astype(int)
 
         logging.warn("Ping pairs created successfully")
 
@@ -320,19 +409,25 @@ class PredSession(PylinkEyetrackerSession):
             contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             units="deg",
         )
+        self.color_1 = self.settings["stimuli"].get("stim_gabor_color_1")
+        self.color_2 = self.settings["stimuli"].get("stim_gabor_color_2")
+        colors = [self.color_1, self.color_2, "white"]
 
-        for _, (angle, ori) in enumerate(
+        self.all_gabor_angles = np.hstack((self.angles_task_gabors, self.angles_irrelevante_gabors))
+
+        for _, (angle, ori, color) in enumerate(
             list(
                 itertools.product(
-                    self.angles_gabors, np.array([0, 45, 90, 135]).astype(int)
+                    self.all_gabor_angles, np.array([0, 45, 90, 135]).astype(int), colors
                 )
             )
         ):
-            self.gabors[(angle, ori)] = Gabors(
+            self.gabors[(angle, ori, color)] = Gabors(
                 win=self.win,
                 size=self.settings["stimuli"].get("stim_size_deg"),
                 sf=self.settings["stimuli"].get("stim_spatial_freq"),
                 ori=ori,
+                color=color,
                 ecc=self.settings["stimuli"].get("distance_from_center"),
                 roll_dist=self.roll_dist,
                 angle=angle,
@@ -340,7 +435,7 @@ class PredSession(PylinkEyetrackerSession):
                 contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
                 units="deg",
             )
-            self.gabors[(angle, ori)].draw()
+            self.gabors[(angle, ori, color)].draw()
 
         # Set up checkerboards
         self.checkerboards = {}
@@ -357,24 +452,60 @@ class PredSession(PylinkEyetrackerSession):
             temporal_freq=self.settings["stimuli"].get("fixation_temporal_freq"),
             units="deg",
         )
+        if self.settings["stimuli"].get("ping_swap_color"):
+            self.swap_colors_index = [int(0), int(1)]
 
-        for _, (angle, ori) in enumerate(
-            list(itertools.product(self.angles_pings, [0, 45, 135, 180]))
-        ):
-            self.checkerboards[(angle, ori)] = Checkerboards(
-                win=self.win,
-                size=self.settings["stimuli"].get("stim_size_deg"),
-                sf=self.settings["stimuli"].get("stim_spatial_freq"),
-                ori=ori,
-                ecc=self.settings["stimuli"].get("distance_from_center"),
-                roll_dist=self.roll_dist,
-                angle=angle,
-                phase=0,
-                contrast=self.settings["stimuli"].get("stim_checkboard_contrast"),
-                temporal_freq=self.settings["stimuli"].get("fixation_temporal_freq"),
-                units="deg",
-            )
-            self.checkerboards[(angle, ori)].draw()
+            self.swap_colors = [
+                [self.color_1, self.color_2],
+                [self.color_2, self.color_1],
+            ]
+
+            for _, (angle, ori, colorswap_ind) in enumerate(
+                list(
+                    itertools.product(
+                        self.angles_pings, [0, 45, 135, 180], self.swap_colors_index
+                    )
+                )
+            ):
+                self.checkerboards[(angle, ori, colorswap_ind)] = Checkerboards(
+                    win=self.win,
+                    size=self.settings["stimuli"].get("stim_size_deg"),
+                    sf=self.settings["stimuli"].get("stim_spatial_freq"),
+                    ori=ori,
+                    colorswap=self.settings["stimuli"].get("ping_swap_color"),
+                    color=self.swap_colors[colorswap_ind],
+                    ecc=self.settings["stimuli"].get("distance_from_center"),
+                    roll_dist=self.roll_dist,
+                    angle=angle,
+                    phase=0,
+                    contrast=self.settings["stimuli"].get("stim_checkboard_contrast"),
+                    temporal_freq=self.settings["stimuli"].get(
+                        "fixation_temporal_freq"
+                    ),
+                    units="deg",
+                )
+                self.checkerboards[(angle, ori, colorswap_ind)].draw()
+        else:
+            for _, (angle, ori, color) in enumerate(
+                list(itertools.product(self.angles_pings, [0, 45, 135, 180], ["white"]))
+            ):
+                self.checkerboards[(angle, ori, color)] = Checkerboards(
+                    win=self.win,
+                    size=self.settings["stimuli"].get("stim_size_deg"),
+                    sf=self.settings["stimuli"].get("stim_spatial_freq"),
+                    ori=ori,
+                    color=color,
+                    ecc=self.settings["stimuli"].get("distance_from_center"),
+                    roll_dist=self.roll_dist,
+                    angle=angle,
+                    phase=0,
+                    contrast=self.settings["stimuli"].get("stim_checkboard_contrast"),
+                    temporal_freq=self.settings["stimuli"].get(
+                        "fixation_temporal_freq"
+                    ),
+                    units="deg",
+                )
+                self.checkerboards[(angle, ori, color)].draw()
 
         self.gabors["test"].draw()
         self.checkerboards["test"].draw()
@@ -507,8 +638,20 @@ class PredSession(PylinkEyetrackerSession):
                     "ori_T": self.oris_gabors[ind_TaskTrial, 0],
                     "angle_D": self.TD_list[ind_TaskTrial, 1],
                     "ori_D": self.oris_gabors[ind_TaskTrial, 1],
+                    "color_T": self.color_gabors[ind_TaskTrial, 0],
+                    "color_D": self.color_gabors[ind_TaskTrial, 1],
                     "ind_TaskTrial": ind_TaskTrial,
                 }
+                background_gabor_angles = deepcopy(self.all_gabor_angles)
+                # background_gabor_angles.astype(int)
+                background_gabor_angles = np.delete(
+                    background_gabor_angles,
+                    np.where(background_gabor_angles == parameters["angle_T"]),
+                )
+                background_gabor_angles = np.delete(
+                    background_gabor_angles,
+                    np.where(background_gabor_angles == parameters["angle_D"]),
+                )
 
                 if self.ses_nr == "test":
                     if self.settings["design"].get("mri_scan"):
@@ -516,15 +659,17 @@ class PredSession(PylinkEyetrackerSession):
                             self.trial_counter + 1 - self.nr_instruction_trials
                         ) % 4 != 0:
                             last_phase_duration = self.settings["design"].get(
-                                "ITI_time"
+                                "task_ITI_time"
                             )
                         else:
                             last_phase_duration = np.inf
                     else:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
-                    phase_durations = [
+                        last_phase_duration = self.settings["design"].get(
+                            "task_ITI_time"
+                        )
+                    task_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("task_refresh_time"),
                         last_phase_duration,
                     ]
                     phase_names = ["fixation", "stimulus", "ITI"]
@@ -547,19 +692,21 @@ class PredSession(PylinkEyetrackerSession):
                         TaskTrial(
                             session=self,
                             trial_nr=self.trial_counter,
-                            phase_durations=phase_durations,
+                            phase_durations=task_phase_durations,
                             phase_names=phase_names,
                             parameters=parameters,
                             keys=keys,
                             timing="seconds",
                             verbose=self.settings["monitor"].get("verbose"),
+                            show_background_gabors=True,
+                            background_gabor_angles=background_gabor_angles,
                             draw_each_frame=False,
                         )
                     )
                 elif self.ses_nr in ["practice", "train"]:
-                    phase_durations = [
+                    task_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("task_refresh_time"),
                         self.settings["design"].get("resp_overtime"),
                         self.settings["design"].get("feedback_time"),
                     ]
@@ -588,11 +735,13 @@ class PredSession(PylinkEyetrackerSession):
                         TaskTrial_train(
                             session=self,
                             trial_nr=self.trial_counter,
-                            phase_durations=phase_durations,
+                            phase_durations=task_phase_durations,
                             phase_names=phase_names,
                             parameters=parameters,
                             keys=keys,
                             timing="seconds",
+                            show_background_gabors=True,
+                            background_gabor_angles=background_gabor_angles,
                             verbose=self.settings["monitor"].get("verbose"),
                             draw_each_frame=False,
                         )
@@ -604,12 +753,13 @@ class PredSession(PylinkEyetrackerSession):
                     "trial_type": "PingTrial",
                     "angle_Ping": self.seq_ping[ind_PingTrial, 0],
                     "ori_Ping": self.oris_pings[ind_PingTrial],
+                    "color_Ping": self.colors_Ping[ind_PingTrial]
                 }
                 keys = None
                 if self.ses_nr == "train":
-                    phase_durations = [
+                    ping_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("ping_refresh_time"),
                         self.settings["design"].get("resp_overtime"),
                     ]
                 elif self.ses_nr == "test":
@@ -618,16 +768,18 @@ class PredSession(PylinkEyetrackerSession):
                             self.trial_counter + 1 - self.nr_instruction_trials
                         ) % 4 != 0:
                             last_phase_duration = self.settings["design"].get(
-                                "ITI_time"
+                                "ping_ITI_time"
                             )
                         else:
                             last_phase_duration = np.inf
                     else:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
+                        last_phase_duration = self.settings["design"].get(
+                            "ping_ITI_time"
+                        )
 
-                    phase_durations = [
+                    ping_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("ping_refresh_time"),
                         last_phase_duration,
                     ]
                 phase_names = ["fixation", "stimulus", "ITI"]
@@ -635,7 +787,7 @@ class PredSession(PylinkEyetrackerSession):
                     PingTrial(
                         session=self,
                         trial_nr=self.trial_counter,
-                        phase_durations=phase_durations,
+                        phase_durations=ping_phase_durations,
                         phase_names=phase_names,
                         parameters=parameters,
                         keys=keys,
@@ -652,15 +804,17 @@ class PredSession(PylinkEyetrackerSession):
                 }
                 if self.settings["design"].get("mri_scan"):
                     if (self.trial_counter + 1 - self.nr_instruction_trials) % 4 != 0:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
+                        last_phase_duration = self.settings["design"].get(
+                            "ping_ITI_time"
+                        )
                     else:
                         last_phase_duration = np.inf
                 else:
-                    last_phase_duration = self.settings["design"].get("ITI_time")
+                    last_phase_duration = self.settings["design"].get("ping_ITI_time")
 
-                phase_durations = [
+                resting_phase_durations = [
                     self.settings["design"].get("fixation_refresh_time"),
-                    self.settings["design"].get("stim_refresh_time"),
+                    self.settings["design"].get("ping_refresh_time"),
                     last_phase_duration,
                 ]
                 phase_names = ["fixation", "stimulus", "ITI"]
@@ -668,7 +822,7 @@ class PredSession(PylinkEyetrackerSession):
                     RestingTrial(
                         session=self,
                         trial_nr=self.trial_counter,
-                        phase_durations=phase_durations,
+                        phase_durations=resting_phase_durations,
                         phase_names=phase_names,
                         parameters=parameters,
                         keys=None,
@@ -684,15 +838,17 @@ class PredSession(PylinkEyetrackerSession):
                 }
                 if self.settings["design"].get("mri_scan"):
                     if (self.trial_counter + 1 - self.nr_instruction_trials) % 4 != 0:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
+                        last_phase_duration = self.settings["design"].get(
+                            "ping_ITI_time"
+                        )
                     else:
                         last_phase_duration = np.inf
                 else:
-                    last_phase_duration = self.settings["design"].get("ITI_time")
+                    last_phase_duration = self.settings["design"].get("ping_ITI_time")
 
-                phase_durations = [
+                sucker_phase_durations = [
                     self.settings["design"].get("fixation_refresh_time"),
-                    self.settings["design"].get("stim_refresh_time"),
+                    self.settings["design"].get("ping_refresh_time"),
                     last_phase_duration,
                 ]
                 phase_names = ["fixation", "stimulus", "ITI"]
@@ -700,7 +856,7 @@ class PredSession(PylinkEyetrackerSession):
                     SuckerTrial(
                         session=self,
                         trial_nr=self.trial_counter,
-                        phase_durations=phase_durations,
+                        phase_durations=sucker_phase_durations,
                         phase_names=phase_names,
                         parameters=parameters,
                         keys=None,
@@ -737,24 +893,49 @@ class PredSession(PylinkEyetrackerSession):
             self.trial_counter += 1
 
     def _create_locations(self):
-        self.angles_gabors = [
-            int(i) for i in np.linspace(45, 360 + 45, 4, endpoint=False)
-        ] % np.array([360])
-        self.angles_pings = [
-            int(i)
+        start_angle_task = (
+            360 / self.settings["design"].get("supprpRF_task_angle_nr") / 2
+        )
+        self.angles_task_gabors = [
+            i
             for i in np.linspace(
-                45,
-                360 + 45,
+                start_angle_task,
+                360 + start_angle_task,
+                self.settings["design"].get("supprpRF_task_angle_nr"),
+                endpoint=False,
+            ) % 360
+        ]
+
+        self.start_angle_task_irrelevante = (
+            360 / self.settings["design"].get("supprpRF_task_irrelevante_angle_nr")
+        )
+        self.angles_irrelevante_gabors = [
+            i
+            for i in np.linspace(
+                self.start_angle_task_irrelevante,
+                360 + self.start_angle_task_irrelevante,
+                self.settings["design"].get("supprpRF_task_irrelevante_angle_nr"),
+                endpoint=False,
+            ) % 360
+        ]
+        start_angle_ping = (
+            360 / self.settings["design"].get("supprpRF_ping_angle_nr") / 2
+        )
+        self.angles_pings = [
+            i
+            for i in np.linspace(
+                start_angle_ping,
+                360 + start_angle_ping,
                 self.settings["design"].get("supprpRF_ping_angle_nr"),
                 endpoint=False,
-            )
-        ] % np.array([360])
+            ) % 360
+        ] 
 
     def _create_fixation(self):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0, 0, 0, 1),
+            color=self.settings["stimuli"].get("fixbullseye_color"),
             pos=[0, self.roll_dist],
             **{
                 "lineWidth": monitorunittools.deg2pix(
@@ -770,6 +951,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
@@ -784,6 +966,7 @@ class PredSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
@@ -823,14 +1006,17 @@ class PredSession(PylinkEyetrackerSession):
             with open(self.yml_log, "r") as ymlseqfile:
                 try:
                     yml_random = yaml.safe_load(ymlseqfile)
+                    print("loading log file from: ", self.yml_log)
                 except yaml.YAMLError as exc:
                     print(exc)
             self.data_yml_log = yml_random
             if yml_random.get("design") is not None:
+                print("loading HPLs from log file...")
                 self.HPL_1 = yml_random.get("design").get("HPL_1")
                 self.HPL_2 = yml_random.get("design").get("HPL_2")
                 create_new_HPL = False
             else:
+                print("creating new HPLs...")
                 create_new_HPL = True
             if yml_random.get("window") is not None:
                 get_roll_dist = True
@@ -842,9 +1028,18 @@ class PredSession(PylinkEyetrackerSession):
             get_roll_dist = False
 
         # if there is no HPL log file, create the HPLs from scratch
+        start_angle = 360 / self.settings["design"].get("supprpRF_task_angle_nr") / 2
         if create_new_HPL:
             location_pool = set(
-                [int(i) for i in np.linspace(45, 360 + 45, 4, endpoint=False)]
+                [
+                    i
+                    for i in np.linspace(
+                        start_angle,
+                        360 + start_angle,
+                        self.settings["design"].get("supprpRF_task_angle_nr"),
+                        endpoint=False,
+                    )
+                ]
                 % np.array([360])
             )
             # Only use neutral locations for the first session
@@ -858,6 +1053,8 @@ class PredSession(PylinkEyetrackerSession):
                 "HPL_1": int(self.HPL_1),
                 "HPL_2": int(self.HPL_2),
             }
+            print("genarate HPL_1: ", self.HPL_1)
+            print("genarate HPL_2: ", self.HPL_2)
         if get_roll_dist:
             self.roll_dist = yml_random.get("window").get("roll_dist")
         else:
@@ -958,7 +1155,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0, 0, 0, 1),
+            color=self.settings["stimuli"].get("fixbullseye_color"),
             pos=[0, self.roll_dist],
             **{
                 "lineWidth": monitorunittools.deg2pix(
@@ -974,6 +1171,7 @@ class RollDownTheWindowSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
@@ -1183,6 +1381,22 @@ class PingSession(PylinkEyetrackerSession):
                 np.repeat(45, self.seq_ping.shape[0] - int(self.seq_ping.shape[0] / 2)),
             ]
         )
+        if not self.settings["stimuli"].get("ping_swap_color"):
+            self.colors_Ping = np.hstack(
+                [
+                    np.repeat("white", int(self.seq_ping.shape[0])),
+                ]
+            )
+        else:
+            self.colors_Ping = np.hstack(
+                [
+                    np.repeat(0, int(self.seq_ping.shape[0] / 2)),
+                    np.repeat(
+                        1, self.seq_ping.shape[0] - int(self.seq_ping.shape[0] / 2)
+                    ),
+                ]
+            )
+        np.random.shuffle(self.colors_Ping)
         np.random.shuffle(self.oris_pings)
         np.random.shuffle(self.seq_ping_direction)
 
@@ -1255,34 +1469,89 @@ class PingSession(PylinkEyetrackerSession):
             "fixation_refresh_time"
         )
 
+        self.color_1 = self.settings["stimuli"].get("stim_gabor_color_1")
+        self.color_2 = self.settings["stimuli"].get("stim_gabor_color_2")
+        
         self.checkerboards = {}
 
-        for _, (angle, ori, direction) in enumerate(
-            list(itertools.product(self.angles_pings, [0, 45, 135, 180], [-1, 1]))
-        ):
-            if direction == 1:
-                base_contrast = self.settings["stimuli"].get("ping_contrast_lowest")
-            elif direction == -1:
-                base_contrast = self.settings["stimuli"].get("ping_contrast_highest")
-            else:
-                raise ValueError("direction should be 1 or -1")
+        if self.settings["stimuli"].get("ping_swap_color"):
+            self.swap_colors_index = [int(0), int(1)]
+            self.swap_colors = [
+                [self.color_1, self.color_2],
+                [self.color_2, self.color_1],
+            ]
 
-            self.checkerboards[(angle, ori, direction)] = CheckerboardsAdjContrast(
-                win=self.win,
-                size=self.settings["stimuli"].get("stim_size_deg"),
-                sf=self.settings["stimuli"].get("stim_spatial_freq"),
-                ori=ori,
-                ecc=self.settings["stimuli"].get("distance_from_center"),
-                roll_dist=self.roll_dist,
-                angle=angle,
-                direction=direction,
-                adj_rate=self.ping_contrast_adj_rate,
-                phase=0,
-                contrast=base_contrast,
-                temporal_freq=self.settings["stimuli"].get("ping_temporal_freq"),
-                units="deg",
-            )
-            self.checkerboards[(angle, ori, direction)].draw()
+            for _, (angle, ori, direction, colorswap_ind) in enumerate(
+                list(
+                    itertools.product(
+                        self.angles_pings,
+                        [0, 45, 135, 180],
+                        [-1, 1],
+                        self.swap_colors_index,
+                    )
+                )
+            ):
+                if direction == 1:
+                    base_contrast = self.settings["stimuli"].get("ping_contrast_lowest")
+                elif direction == -1:
+                    base_contrast = self.settings["stimuli"].get("ping_contrast_highest")
+                else:
+                    raise ValueError("direction should be 1 or -1")
+
+                self.checkerboards[(angle, ori, direction, colorswap_ind)] = CheckerboardsAdjContrast(
+                    win=self.win,
+                    size=self.settings["stimuli"].get("stim_size_deg"),
+                    sf=self.settings["stimuli"].get("stim_spatial_freq"),
+                    ori=ori,
+                    colorswap=self.settings["stimuli"].get("ping_swap_color"),
+                    color=self.swap_colors[colorswap_ind],
+                    ecc=self.settings["stimuli"].get("distance_from_center"),
+                    roll_dist=self.roll_dist,
+                    angle=angle,
+                    direction=direction,
+                    adj_rate=self.ping_contrast_adj_rate,
+                    phase=0,
+                    contrast=base_contrast,
+                    temporal_freq=self.settings["stimuli"].get("ping_temporal_freq"),
+                    units="deg",
+                )
+                self.checkerboards[(angle, ori, direction, colorswap_ind)].draw()
+        else:
+            for _, (angle, ori, direction, color) in enumerate(
+                list(
+                    itertools.product(
+                        self.angles_pings,
+                        [0, 45, 135, 180],
+                        [-1, 1],
+                        ["white"],
+                    )
+                )
+            ):
+                if direction == 1:
+                    base_contrast = self.settings["stimuli"].get("ping_contrast_lowest")
+                elif direction == -1:
+                    base_contrast = self.settings["stimuli"].get("ping_contrast_highest")
+                else:
+                    raise ValueError("direction should be 1 or -1")
+
+                self.checkerboards[(angle, ori, direction)] = CheckerboardsAdjContrast(
+                    win=self.win,
+                    size=self.settings["stimuli"].get("stim_size_deg"),
+                    sf=self.settings["stimuli"].get("stim_spatial_freq"),
+                    ori=ori,
+                    colorswap=self.settings["stimuli"].get("ping_swap_color"),
+                    color=color,
+                    ecc=self.settings["stimuli"].get("distance_from_center"),
+                    roll_dist=self.roll_dist,
+                    angle=angle,
+                    direction=direction,
+                    adj_rate=self.ping_contrast_adj_rate,
+                    phase=0,
+                    contrast=base_contrast,
+                    temporal_freq=self.settings["stimuli"].get("ping_temporal_freq"),
+                    units="deg",
+                )
+                self.checkerboards[(angle, ori, direction, color)].draw()
 
         self.fsmask = Circle(
             win=self.win,
@@ -1388,12 +1657,13 @@ class PingSession(PylinkEyetrackerSession):
                         "angle_Ping": self.seq_ping[ind_PingTrial, 0],
                         "ori_Ping": self.oris_pings[ind_PingTrial],
                         "direction": self.seq_ping_direction[ind_PingTrial],
+                        "color_Ping": self.colors_Ping[ind_PingTrial],
                         "corr_key": corr_key,
                         "ind_TaskTrial": ind_PingTrial,
                     }
-                    phase_durations = [
+                    ping_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("ping_refresh_time"),
                         self.settings["design"].get("resp_overtime"),
                         self.settings["design"].get("feedback_time"),
                     ]
@@ -1403,7 +1673,7 @@ class PingSession(PylinkEyetrackerSession):
                         PingpRFTrial_train(
                             session=self,
                             trial_nr=self.trial_counter,
-                            phase_durations=phase_durations,
+                            phase_durations=ping_phase_durations,
                             phase_names=phase_names,
                             parameters=parameters,
                             keys=keys,
@@ -1431,6 +1701,7 @@ class PingSession(PylinkEyetrackerSession):
                         "angle_Ping": self.seq_ping[ind_PingTrial, 0],
                         "ori_Ping": self.oris_pings[ind_PingTrial],
                         "direction": self.seq_ping_direction[ind_PingTrial],
+                        "color_Ping": self.colors_Ping[ind_PingTrial],
                         "corr_key": corr_key,
                         "ind_TaskTrial": ind_PingTrial,
                     }
@@ -1440,16 +1711,18 @@ class PingSession(PylinkEyetrackerSession):
                             self.trial_counter + 1 - self.nr_instruction_trials
                         ) % 4 != 0:
                             last_phase_duration = self.settings["design"].get(
-                                "ITI_time"
+                                "ping_ITI_time"
                             )
                         else:
                             last_phase_duration = np.inf
                     else:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
+                        last_phase_duration = self.settings["design"].get(
+                            "ping_ITI_time"
+                        )
 
-                    phase_durations = [
+                    ping_phase_durations = [
                         self.settings["design"].get("fixation_refresh_time"),
-                        self.settings["design"].get("stim_refresh_time"),
+                        self.settings["design"].get("ping_refresh_time"),
                         last_phase_duration,
                     ]
                     phase_names = ["fixation", "stimulus", "ITI"]
@@ -1457,7 +1730,7 @@ class PingSession(PylinkEyetrackerSession):
                         PingpRFTrial(
                             session=self,
                             trial_nr=self.trial_counter,
-                            phase_durations=phase_durations,
+                            phase_durations=ping_phase_durations,
                             phase_names=phase_names,
                             parameters=parameters,
                             keys=keys,
@@ -1474,15 +1747,17 @@ class PingSession(PylinkEyetrackerSession):
                 }
                 if self.settings["design"].get("mri_scan"):
                     if (self.trial_counter + 1 - self.nr_instruction_trials) % 4 != 0:
-                        last_phase_duration = self.settings["design"].get("ITI_time")
+                        last_phase_duration = self.settings["design"].get(
+                            "ping_ITI_time"
+                        )
                     else:
                         last_phase_duration = np.inf
                 else:
-                    last_phase_duration = self.settings["design"].get("ITI_time")
+                    last_phase_duration = self.settings["design"].get("ping_ITI_time")
 
-                phase_durations = [
+                resting_phase_durations = [
                     self.settings["design"].get("fixation_refresh_time"),
-                    self.settings["design"].get("stim_refresh_time"),
+                    self.settings["design"].get("ping_refresh_time"),
                     last_phase_duration,
                 ]
                 phase_names = ["fixation", "stimulus", "ITI"]
@@ -1490,7 +1765,7 @@ class PingSession(PylinkEyetrackerSession):
                     RestingTrial(
                         session=self,
                         trial_nr=self.trial_counter,
-                        phase_durations=phase_durations,
+                        phase_durations=resting_phase_durations,
                         phase_names=phase_names,
                         parameters=parameters,
                         keys=None,
@@ -1529,21 +1804,22 @@ class PingSession(PylinkEyetrackerSession):
             self.trial_counter += 1
 
     def _create_locations(self):
+        start_angle = 360 / self.settings["design"].get("pingpRF_ping_angle_nr") / 2
         self.angles_pings = [
-            int(i)
+            i
             for i in np.linspace(
-                45,
-                360 + 45,
+                start_angle,
+                360 + start_angle,
                 self.settings["design"].get("pingpRF_ping_angle_nr"),
                 endpoint=False,
-            )
-        ] % np.array([360])
+            ) % 360
+        ]
 
     def _create_fixation(self):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0, 0, 0, 1),
+            color=self.settings["stimuli"].get("fixbullseye_color"),
             pos=[0, self.roll_dist],
             **{
                 "lineWidth": monitorunittools.deg2pix(
@@ -1559,6 +1835,7 @@ class PingSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
@@ -1573,6 +1850,7 @@ class PingSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
@@ -1724,15 +2002,35 @@ class AwarenessSession(PylinkEyetrackerSession):
         print("--------------------------------")
 
     def _create_locations(self):
+        start_angle = 360 / self.settings["design"].get("supprpRF_task_angle_nr") / 2
         self.angles = [
-            int(i) for i in np.linspace(45, 360 + 45, 4, endpoint=False)
+            i
+            for i in np.linspace(
+                start_angle,
+                360 + start_angle,
+                self.settings["design"].get("supprpRF_task_angle_nr"),
+                endpoint=False,
+            )
         ] % np.array([360])
+
+        self.start_angle_task_irrelevante = (
+            360 / self.settings["design"].get("supprpRF_task_irrelevante_angle_nr")
+        )
+        self.angles_irrelevante_gabors = [
+            i
+            for i in np.linspace(
+                self.start_angle_task_irrelevante,
+                360 + self.start_angle_task_irrelevante,
+                self.settings["design"].get("supprpRF_task_irrelevante_angle_nr"),
+                endpoint=False,
+            ) % 360
+        ]
 
     def _create_fixation(self):
         self.fixbullseye = FixationBullsEye(
             win=self.win,
             circle_radius=self.settings["stimuli"].get("distance_from_center"),
-            color=(0, 0, 0, 1),
+            color=self.settings["stimuli"].get("fixbullseye_color"),
             pos=[0, self.roll_dist],
             **{
                 "lineWidth": monitorunittools.deg2pix(
@@ -1748,6 +2046,7 @@ class AwarenessSession(PylinkEyetrackerSession):
             pos=[0, self.roll_dist],
             dotcolor=-1,
             linecolor=self.settings["window"].get("color"),
+            contrast=self.settings["stimuli"].get("stim_gabor_contrast"),
             cross_lindwidth=monitorunittools.deg2pix(
                 self.settings["stimuli"].get("fixation_size_deg") / 5, self.win.monitor
             ),
