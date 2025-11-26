@@ -1,4 +1,4 @@
-# conda env create -n exptools2 -f exptools2-env.yml
+# conda env create -n exptools2 -f env_exptools2.yml
 # pip install git+https://github.com/VU-Cog-Sci/exptools2/
 # cd exptools2
 # pip install -e .
