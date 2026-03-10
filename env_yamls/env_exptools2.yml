@@ -2,7 +2,7 @@
 # pip install git+https://github.com/VU-Cog-Sci/exptools2/
 # cd exptools2
 # pip install -e .
-# pip install --index-url=https://pypi.sr-research.com sr-research-pylink
+# pip install sr-research-pylink
 name: exptools2
 channels:
 - conda-forge
