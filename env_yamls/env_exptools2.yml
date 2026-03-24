@@ -1,5 +1,9 @@
 # Create your env first with all the dependencies
+# In principle, you can use:
 # conda env create -n exptools2 -f env_exptools2.yml
+
+# But I suggest using mamba, otherwise it took too long to install:
+# mamba env create -n exptools2 -f env_exptools2.yml
 
 # Install exptools2 option1: 
 # pip install git+https://github.com/VU-Cog-Sci/exptools2/
