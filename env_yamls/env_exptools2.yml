@@ -1,8 +1,18 @@
+# Create your env first with all the dependencies
 # conda env create -n exptools2 -f env_exptools2.yml
+
+# Install exptools2 option1: 
 # pip install git+https://github.com/VU-Cog-Sci/exptools2/
-# cd exptools2
-# pip install -e .
+
+# Install exptools2 option2:
+# (1): cd /somewhere/your_package_software_folder
+# (2): git clone git@github.com:VU-Cog-Sci/exptools2.git
+# (3): cd exptools2
+# (4): pip install -e .
+
+# Install pylink
 # pip install sr-research-pylink
+
 name: exptools2
 channels:
 - conda-forge
